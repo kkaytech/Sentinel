@@ -24,3 +24,5 @@ dist/
 
 # PoC working data (regenerate with scripts/generate_reference_data.py)
 poc/01-validation/out/
+.env.dev
+frontend/public/_dev/
