@@ -88,14 +88,14 @@ Sentinel is a pre-publication data quality gate for monthly supplier invoice CSV
 | Impact figures, totals, KPI-01..04 (0007) | Implemented, tested |
 | Issues, notes, waivers, review, approval, staleness (0008) | Implemented, tested. Staleness runs through `shared/hooks.py`, registered in `api/app.py`. |
 | Publication: eligibility E1–E7, snapshot, manifest, export ZIP, verify, offline verifier (0009) | Implemented, tested |
-| Frontend (`frontend/`): sign in, periods, upload, version, findings, finding and issue, impact, review and publish, publications, audit, users | Implemented. The full journey was driven by hand in a browser against the real API on 2026-11-16. **No automated frontend tests.** |
+| Frontend (`frontend/`): sign in, periods, upload, version, findings, finding and issue, impact, review and publish, publications, audit, users | Implemented. Covered by Playwright (`frontend/e2e/`): the full journey plus a no-horizontal-overflow check at phone, tablet and desktop widths. |
 | Validation run execution | **Partial:** runs inside the `POST /versions/{id}/runs` request (202 with the final status). No job queue or crash recovery yet (`app.jobs` is not created). |
 | Finding drill-down | **Partial:** `failing_columns` lists the rule's columns, not the failing cells. |
 | Config reload response | **Partial:** `stale_counts` is always zero, although staleness is propagated. |
-| Serving the frontend in production | Not started: the Dockerfile has no frontend build stage; the UI runs through the Vite dev server only. |
-| PRD §18.2 negative matrix as one suite, Playwright smoke test, `scripts/benchmark.py` | Not started (most negative cases are covered across `tests/api/`) |
+| Single application | Implemented: the API serves `frontend/dist` with an index.html fallback (`api/frontend.py`); `sh scripts/run.sh` builds and starts it on :8000. The Dockerfile builds the UI in a node stage. |
+| PRD §18.2 negative matrix as one suite, `scripts/benchmark.py` | Not started (most negative cases are covered across `tests/api/`) |
 | Column profiling FR-005 (M3), `published.*_current` views (M3), AI explanations (M2) | Not started |
-| Docker Compose and CI | Written, **never run** (no Docker on the dev machine) |
+| Docker Compose and CI | Written, **never executed**: the dev machine has no Docker runtime and the repo has no remote. The image's steps were emulated locally (clean non-editable install, migrate, start, serve UI, sign in) and passed. CI has lint, backend tests, frontend build, Playwright on PostgreSQL 16, and a Compose smoke job. Expect to fix small things on the first real run. |
 
 **Outstanding, do not lose:**
 - **ARD TQ-07:** re-run PoC-1 in the reference environment (`postgres:16`, Docker, 4 vCPU). It was measured on PostgreSQL 18.4 natively.
@@ -112,7 +112,9 @@ Sentinel is a pre-publication data quality gate for monthly supplier invoice CSV
 - Once: `backend/.venv/bin/python scripts/dev_setup.py`. It creates the roles and the `sentinel_dev` database on local PostgreSQL (default `localhost:5432` as the OS user; override with `PGHOST`/`PGPORT`/`PGUSER`), migrates, and creates the demo users `admin`, `analyst` and `approver`. Secrets go to the git-ignored `.env.dev`; the demo password is in the git-ignored `.demo-credentials`. Re-run it after adding a migration.
 - API: `sh scripts/dev-backend.sh` (http://127.0.0.1:8000).
 - Web: `npm --prefix frontend run dev` (http://localhost:5173, proxies `/api` to the API). Type-check with `npm --prefix frontend run typecheck`.
-- Demo data: `backend/.venv/bin/python scripts/generate_reference_data.py --scale demo --dataset corrected --out <dir>`. `corrected` can be published after one waiver; `defective` cannot (non-waivable blockers); `clean` has no findings.
+- One application, no hot reload: `sh scripts/run.sh` (add `--build` after UI changes).
+- End-to-end tests: `npm --prefix frontend run e2e`. They reset a `sentinel_e2e` database on the dev cluster, generate reference data and start their own servers. `E2E_BASE_URL=http://127.0.0.1:8100` runs them against the built bundle instead of Vite.
+- Demo data: committed in `demo-data/<period>/` (regenerate with `sh scripts/make_demo_data.sh`). Always generate data with `--period` equal to the period it is uploaded under.
 - Never point the test suite at the dev cluster: it resets the `sentinel_*` role passwords. Use a separate throwaway cluster for `SENTINEL_TEST_ADMIN_URL`.
 
 **Frontend conventions:** React + TypeScript + Vite, no UI library. `src/api.ts` is the only place that calls the API and holds the response types (hand-written; the API returns untyped dicts, so OpenAPI generation gives nothing useful yet). The browser computes no eligibility and no impact. Severity, state and category are always text labels.

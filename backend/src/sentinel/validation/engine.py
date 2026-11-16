@@ -22,19 +22,19 @@ MAX_SAMPLES = 20  # FR-009
 SEVERITIES = ("BLOCKING", "WARNING", "INFO")
 
 MESSAGES = {
-    "required_column": "{count} required column(s) missing from {table}: {names}.",
-    "required_column_extra": "{count} unexpected column(s) in {table}: {names}.",
-    "not_null": "{count} {table} record(s) have a missing value in {names}.",
-    "type_parse": "{count} {table} record(s) have a value that is not a valid {kinds} in {names}.",
-    "allowed_values": "{count} {table} record(s) have a value outside the allowed list in {names}.",
-    "range": "{count} {table} record(s) have {names} outside the permitted range.",
-    "column_comparison": "{count} {table} record(s) fail the comparison between {names}.",
-    "arithmetic_check": "{count} {table} record(s) do not add up across {names}.",
-    "date_window": "{count} {table} record(s) have {names} outside the permitted dates.",
-    "duplicate_rows": "{groups} group(s) of identical {table} rows ({count} records).",
-    "unique": "{groups} duplicate group(s) ({count} records) share {names} in {table}.",
-    "foreign_key": "{count} {table} record(s) reference a {names} that does not exist.",
-    "cross_table_condition": "{count} {table} record(s) conflict with a related record ({names}).",
+    "required_column": "{n} required {columns_word} missing from {table}: {names}.",
+    "required_column_extra": "{n} unexpected {columns_word} in {table}: {names}.",
+    "not_null": "{n} {records} in {table} {have} a missing value in {names}.",
+    "type_parse": "{n} {records} in {table} {have} a value in {names} that is not a {kinds}.",
+    "allowed_values": "{n} {records} in {table} {have} a value in {names} outside the allowed set.",
+    "range": "{n} {records} in {table} {have} {names} outside the permitted range.",
+    "column_comparison": "{n} {records} in {table} fail the comparison between {names}.",
+    "arithmetic_check": "{n} {records} in {table} {do} not add up across {names}.",
+    "date_window": "{n} {records} in {table} {have} {names} outside the permitted dates.",
+    "duplicate_rows": "{g} {groups} of identical rows in {table} ({n} {records}).",
+    "unique": "{g} duplicate {groups} in {table} ({n} {records}) share {names}.",
+    "foreign_key": "{n} {records} in {table} reference a {names} that does not exist.",
+    "cross_table_condition": "{n} {records} in {table} conflict with a related record ({names}).",
 }
 
 
@@ -134,9 +134,16 @@ def _message(draft: FindingDraft, contract: Contract) -> str:
     rule = draft.rule
     table = contract.tables[rule.table]
     kinds = sorted({c.kind for c in table.columns if c.name in draft.columns})
+    count, groups = draft.failing_count, draft.details.get("groups", 0)
+    one = count == 1
     return MESSAGES[draft.message_key or rule.type].format(
-        count=draft.failing_count,
-        groups=draft.details.get("groups", 0),
+        n=f"{count:,}",
+        g=f"{groups:,}",
+        records="record" if one else "records",
+        groups="group" if groups == 1 else "groups",
+        columns_word="column is" if one else "columns are",
+        have="has" if one else "have",
+        do="does" if one else "do",
         table=rule.table,
         names=", ".join(draft.columns),
         kinds=" or ".join(kinds),

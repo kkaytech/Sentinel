@@ -121,10 +121,11 @@ def test_fr_006_1_defective_dataset_matches_the_catalogue_exactly(
     sample = found["INV_SUPPLIER_STATUS"]["samples"][0]
     assert sample["values"]["supplier_id"].startswith("SUP-")
     # Message templates are deterministic and carry counts only.
+    groups = len(expected["INV_BK_UNIQUE"]["groups"])
+    records = len(expected["INV_BK_UNIQUE"]["rows"])
     assert found["INV_BK_UNIQUE"]["message"] == (
-        "9 duplicate group(s) (19 records) share supplier_id, supplier_invoice_number in invoices."
-        if len(expected["INV_BK_UNIQUE"]["groups"]) == 9
-        else found["INV_BK_UNIQUE"]["message"]
+        f"{groups} duplicate groups in invoices ({records} records) share "
+        "supplier_id, supplier_invoice_number."
     )
     counts = run["finding_counts"]
     assert counts["BLOCKING"] + counts["WARNING"] == 16 and counts["INFO"] == 0

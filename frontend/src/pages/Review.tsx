@@ -116,8 +116,12 @@ export function ReviewPage() {
         <div className="alert warn">Since this review was submitted, the following changed: {s.differences.map((d) => d.replace(/_/g, " ")).join(", ")}. The live state is shown below.</div>
       )}
 
-      <Card title={`Publication checklist — ${s.eligibility.eligible ? "eligible" : "not eligible"}`}>
-        <p className="muted" style={{ marginTop: 0 }}>Computed by the server with the same check that publish uses. Nothing here is decided in the browser.</p>
+      <Card title={`Publication checklist — ${published ? "published" : s.eligibility.eligible ? "eligible" : "not eligible"}`}>
+        <p className="muted" style={{ marginTop: 0 }}>
+          {published
+            ? "This version passed every check when it was published. The last check now fails only because the period is taken: each period can be published once."
+            : "Computed by the server with the same check that publish uses. Nothing here is decided in the browser."}
+        </p>
         <table>
           <thead>
             <tr>

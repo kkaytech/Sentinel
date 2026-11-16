@@ -96,3 +96,41 @@ ul.plain li { padding: 4px 0; }
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
 .tabs a { padding: 8px 14px; color: var(--muted); border-bottom: 2px solid transparent; }
 .tabs a.active { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+
+/* ---- wrapping and small screens --------------------------------------------------------- */
+h1 { overflow-wrap: anywhere; line-height: 1.25; }
+h1 .badge { vertical-align: middle; margin-left: 6px; }
+.mono { overflow-wrap: anywhere; }
+.card { overflow-x: auto; }
+.page-head { flex-wrap: wrap; }
+.page-head > div:first-child { min-width: 0; flex: 1 1 320px; }
+.page-head p { margin: 4px 0 0; }
+.topbar { flex-wrap: wrap; min-height: 52px; height: auto; padding: 8px 24px; row-gap: 6px; }
+.topbar nav { flex-wrap: wrap; }
+.row .field { min-width: 0; }
+input[type="file"] { max-width: 100%; }
+td { overflow-wrap: break-word; }
+.alert { overflow-wrap: anywhere; }
+.alert ul { margin: 6px 0 0; padding-left: 20px; }
+form .field:last-child { margin-bottom: 0; }
+h3:first-child { margin-top: 0; }
+
+@media (max-width: 720px) {
+  main { padding: 16px 12px; }
+  .topbar { padding: 8px 12px; gap: 12px; }
+  .topbar nav { order: 3; flex-basis: 100%; gap: 14px; }
+  .topbar .whoami { margin-left: auto; }
+  .card { padding: 14px 12px; }
+  h1 { font-size: 1.25rem; }
+  dl.facts { grid-template-columns: 1fr; gap: 2px; }
+  dl.facts dt { margin-top: 8px; font-size: 0.82rem; }
+  .page-head .actions { width: 100%; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .row { gap: 10px; }
+  .row .field, .row .field input, .row .field select { width: 100%; }
+  .card table { min-width: 720px; }
+  .login { margin: 6vh 12px; }
+  .tabs { overflow-x: auto; white-space: nowrap; }
+}
+td.mono { overflow-wrap: normal; white-space: nowrap; }
+td.mono.wrap { white-space: normal; overflow-wrap: anywhere; }

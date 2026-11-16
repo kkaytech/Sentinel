@@ -65,7 +65,7 @@ export function VersionPage() {
                   </Link>
                 </>
               )}
-              {has("ANALYST") && v.status === "ACTIVE" && (
+              {has("ANALYST") && v.status === "ACTIVE" && v.derived_state !== "PUBLISHED" && (
                 <button className="primary" onClick={() => void runValidation()} disabled={busy}>
                   {busy ? "Validating…" : current ? "Run validation again" : "Run validation"}
                 </button>

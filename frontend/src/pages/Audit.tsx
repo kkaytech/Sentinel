@@ -58,7 +58,7 @@ export function AuditPage() {
                       <td>
                         {e.entity_type} <span className="mono muted">{e.entity_id.slice(0, 13)}</span>
                       </td>
-                      <td className="mono" style={{ maxWidth: 420, overflowWrap: "anywhere" }}>{JSON.stringify(e.payload)}</td>
+                      <td className="mono wrap" style={{ maxWidth: 420 }}>{JSON.stringify(e.payload)}</td>
                     </tr>
                   ))}
                 </tbody>
