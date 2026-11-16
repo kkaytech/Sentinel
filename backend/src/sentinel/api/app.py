@@ -20,6 +20,7 @@ from sentinel.api.routes import (
     config,
     datasets,
     health,
+    publication,
     review,
     users,
     validation,
@@ -101,6 +102,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
         datasets.router,
         validation.router,
         review.router,
+        publication.router,
     ):
         app.include_router(router)
     return app

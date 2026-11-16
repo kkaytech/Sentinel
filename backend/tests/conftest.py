@@ -42,6 +42,10 @@ TEST_PASSWORD = "correct-horse-battery-staple"  # pragma: allowlist secret - tes
 
 RESET_TABLES = [
     "audit.events",
+    "published.invoices",
+    "published.suppliers",
+    "app.publication_attempts",
+    "app.publications",
     "app.approval_decisions",
     "app.review_requests",
     "app.waiver_decisions",

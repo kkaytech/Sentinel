@@ -20,7 +20,7 @@ UNSAFE = {"POST", "PUT", "PATCH", "DELETE"}
 
 
 HTTP_METHODS = {"get", "post", "put", "patch", "delete"}
-EXPECTED_OPERATIONS = 33  # guards against these tests passing vacuously
+EXPECTED_OPERATIONS = 40  # guards against these tests passing vacuously
 
 
 def _operations(settings: Settings, app_engine: Engine) -> list[tuple[str, str, dict[str, Any]]]:

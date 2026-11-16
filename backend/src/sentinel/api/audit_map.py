@@ -53,4 +53,10 @@ AUDITED_ROUTES: dict[str, frozenset[str]] = {
     "POST /api/v1/review-requests/{request_id}/decision": frozenset(
         {"REVIEW_APPROVED", "REVIEW_REJECTED"}
     ),
+    "POST /api/v1/versions/{version_id}/publish": frozenset(
+        {"DATASET_PUBLISHED", "PUBLICATION_REFUSED"}
+    ),
+    "POST /api/v1/publications/{publication_ref}/verify": frozenset(
+        {"PUBLICATION_VERIFIED", "PUBLICATION_VERIFICATION_FAILED"}
+    ),
 }
