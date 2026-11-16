@@ -23,6 +23,7 @@ from sqlalchemy import Connection, Engine, func, insert, select, update
 from sentinel import audit
 from sentinel.config.models import Contract, RuleSet, validate_contract, validate_rule_set
 from sentinel.config.tables import active_config, config_versions
+from sentinel.shared import hooks
 from sentinel.shared.authz import Permission, Principal, require
 from sentinel.shared.db import unit_of_work
 from sentinel.shared.errors import SentinelError, not_found
@@ -170,6 +171,10 @@ def activate(conn: Connection, actor: Principal | None, loaded: LoadedConfig) ->
             update(active_config)
             .where(active_config.c.dataset_key == key)
             .values(activated_at=func.now(), **values)
+        )
+    if "RULE_SET" in changed and current is not None:
+        hooks.emit(
+            hooks.RULE_SET_ACTIVATED, conn, dataset_key=key, rule_set_version_id=ids["RULE_SET"]
         )
     if changed:
         audit.record(

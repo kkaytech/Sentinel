@@ -19,6 +19,7 @@ from sqlalchemy import Connection, Engine, func, insert, select, text, update
 from sentinel import __version__, audit
 from sentinel.config import service as config_service
 from sentinel.ingestion.tables import dataset_periods, dataset_versions, version_rows
+from sentinel.shared import hooks
 from sentinel.shared.authz import Permission, Principal, require
 from sentinel.shared.csvsafe import neutralise
 from sentinel.shared.db import unit_of_work
@@ -88,6 +89,7 @@ def start_run(principal: Principal, conn: Connection, version_id: UUID) -> UUID:
         )
         .returning(validation_runs.c.id)
     ).scalar_one()
+    hooks.emit(hooks.RUN_STARTED, conn, version_id=version_id, run_id=run_id)
     audit.record(
         conn,
         actor=principal,

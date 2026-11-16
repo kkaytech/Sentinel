@@ -20,7 +20,13 @@
       "app.finding_records": ["INSERT", "SELECT"],
       "app.impact_figures": ["INSERT", "SELECT"],
       "app.run_impact_totals": ["INSERT", "SELECT"],
-      "app.kpi_values": ["INSERT", "SELECT"]
+      "app.kpi_values": ["INSERT", "SELECT"],
+      "app.issues": ["INSERT", "SELECT"],
+      "app.issue_notes": ["INSERT", "SELECT"],
+      "app.waivers": ["INSERT", "SELECT"],
+      "app.waiver_decisions": ["INSERT", "SELECT"],
+      "app.review_requests": ["INSERT", "SELECT"],
+      "app.approval_decisions": ["INSERT", "SELECT"]
     },
     "sentinel_reader": {}
   },
@@ -32,7 +38,10 @@
       "app.active_config": ["activated_at", "contract_version_id", "rule_set_version_id"],
       "app.dataset_periods": ["last_activity_at"],
       "app.dataset_versions": ["status"],
-      "app.validation_runs": ["error_detail", "finding_counts", "finished_at", "not_evaluated", "status"]
+      "app.validation_runs": ["error_detail", "finding_counts", "finished_at", "not_evaluated", "status"],
+      "app.issues": ["state", "state_changed_at"],
+      "app.waivers": ["stale_reason", "status"],
+      "app.review_requests": ["closed_at", "stale_reason", "status"]
     },
     "sentinel_reader": {}
   },

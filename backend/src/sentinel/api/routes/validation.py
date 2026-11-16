@@ -10,6 +10,7 @@ from sqlalchemy import Engine
 
 from sentinel.api.deps import AuthContext, current_auth, get_engine, get_settings, protected
 from sentinel.impact import service as impact
+from sentinel.review import service as review
 from sentinel.shared.authz import Permission
 from sentinel.shared.db import unit_of_work
 from sentinel.shared.settings import Settings
@@ -42,7 +43,10 @@ def post_run(
     with unit_of_work(engine) as conn:
         run_id = validation.start_run(ctx.principal, conn, version_id)
     validation.execute_run(
-        engine, run_id, post_steps=[impact.compute], key_cap=settings.finding_key_cap
+        engine,
+        run_id,
+        post_steps=[impact.compute, review.create_issues],
+        key_cap=settings.finding_key_cap,
     )
     with unit_of_work(engine) as conn:
         return validation.get_run(ctx.principal, conn, run_id)

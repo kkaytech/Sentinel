@@ -32,6 +32,7 @@ from sentinel.ingestion.tables import (
     raw_files,
     version_rows,
 )
+from sentinel.shared import hooks
 from sentinel.shared.authz import Permission, Principal, require
 from sentinel.shared.db import unit_of_work
 from sentinel.shared.errors import SentinelError, not_found
@@ -239,6 +240,8 @@ def _create_version(
             "row_counts": {name: len(table.rows) for name, table in parsed.items()},
         },
     )
+    if earlier:
+        hooks.emit(hooks.VERSIONS_SUPERSEDED, conn, version_ids=[e.id for e in earlier])
     for old in earlier:
         audit.record(
             conn,

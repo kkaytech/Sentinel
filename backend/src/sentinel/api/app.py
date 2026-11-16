@@ -14,14 +14,33 @@ from sqlalchemy import Engine
 
 from sentinel import __version__
 from sentinel.api.errors import install_error_handlers
-from sentinel.api.routes import audit, auth, config, datasets, health, users, validation
+from sentinel.api.routes import (
+    audit,
+    auth,
+    config,
+    datasets,
+    health,
+    review,
+    users,
+    validation,
+)
 from sentinel.config import service as config_service
+from sentinel.review import service as review_service
+from sentinel.shared import hooks
 from sentinel.shared.context import set_correlation_id
 from sentinel.shared.db import check_database_role, make_engine
 from sentinel.shared.logging import configure_logging
 from sentinel.shared.settings import Settings
 
 log = logging.getLogger("sentinel.api")
+
+
+def register_hooks() -> None:
+    """Wire staleness propagation (FS §2.6) to the events that cause it. Idempotent."""
+    hooks.register(hooks.VERSIONS_SUPERSEDED, review_service.on_versions_superseded)
+    hooks.register(hooks.RUN_STARTED, review_service.on_run_started)
+    hooks.register(hooks.RULE_SET_ACTIVATED, review_service.on_rule_set_activated)
+
 
 SECURITY_HEADERS = {
     "Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'",
@@ -36,6 +55,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
     owns_engine = engine is None
     engine = engine or make_engine(settings.app_database_url)
     configure_logging()
+    register_hooks()
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -80,6 +100,7 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
         config.router,
         datasets.router,
         validation.router,
+        review.router,
     ):
         app.include_router(router)
     return app
