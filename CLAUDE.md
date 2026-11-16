@@ -75,19 +75,31 @@ Sentinel is a pre-publication data quality gate for monthly supplier invoice CSV
 
 ## Current status and next step
 
-**M1 steps 1–3 are done.**
-- Step 1: walking skeleton (migrations 0001–0003, authentication, sessions, CSRF, throttling, users, audit, `/health`).
-- Step 2: PoC-1. Variant A adopted; ADR-006 is Accepted (ARD v1.2 §10.1.1, `docs/poc-01-validation-performance.md`).
-- Step 3: configuration loading, ingestion and versions, the rule engine (all 12 rule types, 32 rules) and impact (migrations 0004–0007; Doc 4 §3.2–§3.5).
+**Priority (product owner, 2026-11-16): get a working, usable browser application.** Build features, frontend first, wired to the real backend. No fake or hardcoded data. No AI work (M2) until the core journey works. Do not spend effort on documentation beyond what the app needs.
 
-**Next is step 4:** issues, waivers, review and staleness (migration 0008).
+**Target journey:** sign in → upload CSVs → view dataset → run validation → inspect findings → view impact → resolve issues (waivers) → review and approve → publish.
+
+| Area | State |
+|---|---|
+| Auth, sessions, CSRF, users, audit, `/health` (migrations 0001–0003) | Implemented, tested |
+| Config versions and reload (0004) | Implemented, tested. Staleness on rule-set change is a no-op until 0008. |
+| Ingestion, versions, raw files (0005) | Implemented, tested |
+| Rule engine: 12 rule types, 32 rules (0006) | Implemented, tested against the generator's catalogue |
+| Impact figures, totals, KPI-01..04 (0007) | Implemented, tested |
+| Validation run execution | **Partial:** runs inside the `POST /versions/{id}/runs` request (202 with the final status). The job queue is migration 0009. |
+| Derived version state | **Partial:** `IN_REVIEW`, `APPROVED`, `PUBLISHED` need 0008 and 0009 (`api/views.py`). |
+| Finding drill-down | **Partial:** `failing_columns` lists the rule's columns, not the failing cells. |
+| Frontend (`frontend/`) | See "Frontend" below |
+| Issues, notes, waivers, review, approval, staleness (0008) | Not started |
+| Publication: eligibility E1–E7, snapshot, manifest, export ZIP, verifier, jobs (0009) | Not started |
+| PRD §18.2 negative matrix, Playwright smoke test, `scripts/benchmark.py` | Not started |
+| Column profiling FR-005 (M3), AI explanations (M2) | Not started; table `app.column_profiles` exists, unpopulated |
+| Docker Compose and CI | Written, **never run** (no Docker on the dev machine) |
 
 **Outstanding, do not lose:**
 - **ARD TQ-07:** re-run PoC-1 in the reference environment (`postgres:16`, Docker, 4 vCPU). It was measured on PostgreSQL 18.4 natively.
-- Validation runs execute inside the `POST /versions/{id}/runs` request until the job queue arrives with migration 0009 (step 5). The response is `202` with the run already in its final status.
-- `scripts/benchmark.py` (NFR-001.1) is not built yet.
-- Column profiling (FR-005) is M3; `app.column_profiles` exists but is not populated.
-- The project is not yet a Git repository; initialise it before the first commit.
+- A finding over the 10,000 key cap keeps an exact count, but its impact covers only the stored keys (`inputs.key_list_truncated`). Needs a product decision.
+- The Bash tool can stall after a test run finishes. Redirect pytest output to a log file and grep it.
 
 **Engine rules to keep (decided after PoC-1):**
 - The completion transaction starts with `SET LOCAL work_mem = '64MB'`.
