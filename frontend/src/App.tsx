@@ -6,6 +6,8 @@ import { ImpactPage } from "./pages/Impact";
 import { LoginPage } from "./pages/Login";
 import { PeriodPage } from "./pages/Period";
 import { PeriodsPage } from "./pages/Periods";
+import { PublicationPage, PublicationsPage } from "./pages/Publications";
+import { ReviewPage } from "./pages/Review";
 import { RunPage } from "./pages/Run";
 import { UsersPage } from "./pages/Users";
 import { VersionPage } from "./pages/Version";
@@ -23,6 +25,7 @@ export function App() {
         </NavLink>
         <nav>
           <NavLink to="/periods">Periods</NavLink>
+          <NavLink to="/publications">Publications</NavLink>
           <NavLink to="/audit">Audit</NavLink>
           {has("ADMIN") && <NavLink to="/users">Users</NavLink>}
         </nav>
@@ -41,6 +44,9 @@ export function App() {
           <Route path="/periods" element={<PeriodsPage />} />
           <Route path="/periods/:period" element={<PeriodPage />} />
           <Route path="/versions/:versionId" element={<VersionPage />} />
+          <Route path="/versions/:versionId/review" element={<ReviewPage />} />
+          <Route path="/publications" element={<PublicationsPage />} />
+          <Route path="/publications/:ref" element={<PublicationPage />} />
           <Route path="/runs/:runId" element={<RunPage />} />
           <Route path="/runs/:runId/impact" element={<ImpactPage />} />
           <Route path="/findings/:findingId" element={<FindingPage />} />

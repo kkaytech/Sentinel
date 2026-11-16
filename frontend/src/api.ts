@@ -241,3 +241,117 @@ export interface UserRow {
   is_active: boolean;
   roles: Role[];
 }
+
+// ---- review and publication ---------------------------------------------------------------
+export interface Person {
+  id: string;
+  display_name: string;
+}
+
+export interface Issue {
+  id: string;
+  finding_id: string;
+  run_id: string;
+  dataset_version_id: string;
+  rule_id: string;
+  severity: "BLOCKING" | "WARNING";
+  waivable: boolean;
+  state: "OPEN" | "WAIVER_REQUESTED" | "WAIVED" | "CLOSED_NOT_CURRENT";
+  allowed_transitions: string[];
+  message?: string;
+  failing_count?: number;
+}
+
+export interface Waiver {
+  id: string;
+  issue_id: string;
+  rule_id: string;
+  status: "REQUESTED" | "GRANTED" | "DENIED" | "STALE";
+  stale_reason: string | null;
+  category: string;
+  justification: string;
+  requested_by: Person | null;
+  requested_at: string;
+  decision: string | null;
+  decided_by: Person | null;
+  decided_at: string | null;
+  comment: string | null;
+}
+
+export interface Note {
+  id: string;
+  author: Person | null;
+  body: string;
+  created_at: string;
+}
+
+export interface IssueDetail {
+  issue: Issue;
+  finding: Finding;
+  notes: Note[];
+  waivers: Waiver[];
+}
+
+export interface ReviewRequest {
+  id: string;
+  status: "OPEN" | "APPROVED" | "REJECTED" | "STALE";
+  stale_reason: string | null;
+  note: string;
+  submitted_by: Person | null;
+  submitted_at: string;
+  decision: string | null;
+  decided_by: Person | null;
+  decided_at: string | null;
+  comment: string | null;
+  acknowledged_warning_count: number | null;
+}
+
+export interface EligibilityCheck {
+  id: string;
+  passed: boolean;
+  code: string | null;
+  details: Record<string, unknown>;
+}
+
+export interface Eligibility {
+  eligible: boolean;
+  checks: EligibilityCheck[];
+}
+
+export interface ReviewSummary {
+  version: Version & { publication_ref: string | null };
+  current_run_id: string | null;
+  request: ReviewRequest | null;
+  differences: string[];
+  issues: Issue[];
+  waivers: Waiver[];
+  history: ReviewRequest[];
+  open_warning_count: number;
+  blocking_unwaived_count: number;
+  blocking_non_waivable_count: number;
+  live: { impact_totals: ImpactTotal[]; kpis: KpiRow[] } | null;
+  eligibility: Eligibility;
+}
+
+export interface Publication {
+  publication_ref: string;
+  dataset: string;
+  period: string;
+  version_id: string;
+  version_label: string;
+  status: string;
+  published_by: Person;
+  published_at: string;
+  snapshot_format: string;
+  snapshot_hash: string;
+  table_hashes: Record<string, string>;
+  row_counts: Record<string, number>;
+  manifest_sha256: string;
+}
+
+export interface Verification {
+  result: "VERIFIED" | "FAILED";
+  tables: { table: string; expected_sha256: string; actual_sha256: string; rows_expected: number; rows_actual: number }[];
+  snapshot_hash_ok: boolean;
+  manifest_sha256_ok: boolean;
+}

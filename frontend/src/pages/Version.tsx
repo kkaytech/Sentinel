@@ -60,6 +60,9 @@ export function VersionPage() {
                   <Link className="button" to={`/runs/${current.id}/impact`}>
                     Impact
                   </Link>
+                  <Link className="button" to={`/versions/${v.id}/review`}>
+                    Review and publish
+                  </Link>
                 </>
               )}
               {has("ANALYST") && v.status === "ACTIVE" && (

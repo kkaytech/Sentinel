@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, type Finding, type FindingImpact, type FindingRecord, type Page, type Run } from "../api";
 import { CATEGORY_LABELS, Card, Empty, ErrorBox, Loading, Money, Severity, useLoad } from "../ui";
+import { IssuePanel } from "./IssuePanel";
 
 const PAGE_SIZE = 50;
 
@@ -70,6 +71,8 @@ export function FindingPage() {
               <dd>{f.severity !== "BLOCKING" ? "Not applicable (not blocking)" : f.waivable ? "Yes" : "No — must be fixed at source"}</dd>
             </dl>
           </Card>
+
+          <IssuePanel runId={f.run_id} findingId={f.id} />
 
           <Card title="Financial impact">
             {impact.data && impact.data.figures.length === 0 && <Empty>This rule carries no monetary figure.</Empty>}

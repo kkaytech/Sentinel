@@ -82,18 +82,19 @@ Sentinel is a pre-publication data quality gate for monthly supplier invoice CSV
 | Area | State |
 |---|---|
 | Auth, sessions, CSRF, users, audit, `/health` (migrations 0001–0003) | Implemented, tested |
-| Config versions and reload (0004) | Implemented, tested. Staleness on rule-set change is a no-op until 0008. |
+| Config versions and reload (0004) | Implemented, tested |
 | Ingestion, versions, raw files (0005) | Implemented, tested |
 | Rule engine: 12 rule types, 32 rules (0006) | Implemented, tested against the generator's catalogue |
 | Impact figures, totals, KPI-01..04 (0007) | Implemented, tested |
-| Validation run execution | **Partial:** runs inside the `POST /versions/{id}/runs` request (202 with the final status). The job queue is migration 0009. |
-| Derived version state | **Partial:** `IN_REVIEW`, `APPROVED`, `PUBLISHED` need 0008 and 0009 (`api/views.py`). |
+| Issues, notes, waivers, review, approval, staleness (0008) | Implemented, tested. Staleness runs through `shared/hooks.py`, registered in `api/app.py`. |
+| Publication: eligibility E1–E7, snapshot, manifest, export ZIP, verify, offline verifier (0009) | Implemented, tested |
+| Frontend (`frontend/`): sign in, periods, upload, version, findings, finding and issue, impact, review and publish, publications, audit, users | Implemented. The full journey was driven by hand in a browser against the real API on 2026-11-16. **No automated frontend tests.** |
+| Validation run execution | **Partial:** runs inside the `POST /versions/{id}/runs` request (202 with the final status). No job queue or crash recovery yet (`app.jobs` is not created). |
 | Finding drill-down | **Partial:** `failing_columns` lists the rule's columns, not the failing cells. |
-| Frontend (`frontend/`) | See "Frontend" below |
-| Issues, notes, waivers, review, approval, staleness (0008) | Not started |
-| Publication: eligibility E1–E7, snapshot, manifest, export ZIP, verifier, jobs (0009) | Not started |
-| PRD §18.2 negative matrix, Playwright smoke test, `scripts/benchmark.py` | Not started |
-| Column profiling FR-005 (M3), AI explanations (M2) | Not started; table `app.column_profiles` exists, unpopulated |
+| Config reload response | **Partial:** `stale_counts` is always zero, although staleness is propagated. |
+| Serving the frontend in production | Not started: the Dockerfile has no frontend build stage; the UI runs through the Vite dev server only. |
+| PRD §18.2 negative matrix as one suite, Playwright smoke test, `scripts/benchmark.py` | Not started (most negative cases are covered across `tests/api/`) |
+| Column profiling FR-005 (M3), `published.*_current` views (M3), AI explanations (M2) | Not started |
 | Docker Compose and CI | Written, **never run** (no Docker on the dev machine) |
 
 **Outstanding, do not lose:**
@@ -106,6 +107,15 @@ Sentinel is a pre-publication data quality gate for monthly supplier invoice CSV
 - Each table's primary-key `unique` rule is evaluated first; findings are stored and shown in rule-ID order.
 - Currency columns in impact tables are `text`. An invalid currency is a finding, never an insert failure.
 - In SQLAlchemy Core, group or order by a subquery column, never by a repeated expression: each repeat gets its own bind parameter and PostgreSQL then rejects the `GROUP BY`.
+
+**Run the app locally** (from the repo root):
+- Once: `backend/.venv/bin/python scripts/dev_setup.py`. It creates the roles and the `sentinel_dev` database on local PostgreSQL (default `localhost:5432` as the OS user; override with `PGHOST`/`PGPORT`/`PGUSER`), migrates, and creates the demo users `admin`, `analyst` and `approver`. Secrets go to the git-ignored `.env.dev`; the demo password is in the git-ignored `.demo-credentials`. Re-run it after adding a migration.
+- API: `sh scripts/dev-backend.sh` (http://127.0.0.1:8000).
+- Web: `npm --prefix frontend run dev` (http://localhost:5173, proxies `/api` to the API). Type-check with `npm --prefix frontend run typecheck`.
+- Demo data: `backend/.venv/bin/python scripts/generate_reference_data.py --scale demo --dataset corrected --out <dir>`. `corrected` can be published after one waiver; `defective` cannot (non-waivable blockers); `clean` has no findings.
+- Never point the test suite at the dev cluster: it resets the `sentinel_*` role passwords. Use a separate throwaway cluster for `SENTINEL_TEST_ADMIN_URL`.
+
+**Frontend conventions:** React + TypeScript + Vite, no UI library. `src/api.ts` is the only place that calls the API and holds the response types (hand-written; the API returns untyped dicts, so OpenAPI generation gives nothing useful yet). The browser computes no eligibility and no impact. Severity, state and category are always text labels.
 
 **Commands** (run from `backend/`):
 - Tests: `SENTINEL_TEST_ADMIN_URL=postgresql+psycopg://<superuser>@<host>:<port>/postgres .venv/bin/pytest --cov`. The suite creates the roles and a throwaway `sentinel_test` database itself.

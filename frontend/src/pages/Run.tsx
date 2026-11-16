@@ -1,6 +1,7 @@
 import { Link, NavLink, useParams } from "react-router-dom";
-import { api, type Finding, type Page, type Run, type Version } from "../api";
+import { api, type Finding, type Issue, type Page, type Run, type Version } from "../api";
 import { Card, Empty, ErrorBox, Loading, Severity, useLoad, when } from "../ui";
+import { IssueState } from "./IssuePanel";
 
 export function RunHeader({ run, version }: { run: Run; version: Version | null }) {
   return (
@@ -23,6 +24,7 @@ export function RunHeader({ run, version }: { run: Run; version: Version | null 
           Findings
         </NavLink>
         <NavLink to={`/runs/${run.id}/impact`}>Reporting impact</NavLink>
+        <NavLink to={`/versions/${run.dataset_version_id}/review`}>Review and publish</NavLink>
       </div>
     </>
   );
@@ -45,6 +47,8 @@ export function RunPage() {
   const { runId = "" } = useParams();
   const { run, version } = useRun(runId);
   const findings = useLoad(() => api.get<Page<Finding>>(`/runs/${runId}/findings`), [runId]);
+  const issues = useLoad(() => api.get<Page<Issue>>(`/runs/${runId}/issues`), [runId]);
+  const stateOf = new Map(issues.data?.items.map((i) => [i.finding_id, i.state]));
   const r = run.data;
   return (
     <>
@@ -82,6 +86,7 @@ export function RunPage() {
                       <th>Finding</th>
                       <th className="num">Records</th>
                       <th>Waivable</th>
+                      <th>Issue</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -96,6 +101,7 @@ export function RunPage() {
                         <td>{f.message}</td>
                         <td className="num">{f.failing_count.toLocaleString()}</td>
                         <td>{f.severity !== "BLOCKING" ? "n/a" : f.waivable ? "Yes" : "No — fix at source"}</td>
+                        <td>{stateOf.has(f.id) ? <IssueState state={stateOf.get(f.id)!} /> : "—"}</td>
                       </tr>
                     ))}
                   </tbody>
