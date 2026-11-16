@@ -27,6 +27,7 @@ class Settings:
     login_failure_limit: int = 10  # NFR-002
     login_window_seconds: int = 15 * 60  # NFR-002
     config_dir: str = DEFAULT_CONFIG_DIR  # FR-002
+    frontend_dir: str | None = None  # the built UI; None when Vite serves it
     max_file_bytes: int = 20 * 1024 * 1024  # NFR-001
     max_rows: int = 200_000  # NFR-001
     finding_key_cap: int = 10_000  # NFR-001, FR-009
@@ -44,6 +45,7 @@ class Settings:
             env=env["SENTINEL_ENV"],
             https=env.get("SENTINEL_HTTPS", "false").lower() == "true",
             config_dir=env.get("SENTINEL_CONFIG_DIR", DEFAULT_CONFIG_DIR),
+            frontend_dir=env.get("SENTINEL_FRONTEND_DIR") or _default_frontend_dir(),
             max_file_bytes=_positive_int(env, "SENTINEL_MAX_FILE_MB", 20) * 1024 * 1024,
             max_rows=_positive_int(env, "SENTINEL_MAX_ROWS", 200_000),
         )
@@ -68,3 +70,9 @@ def _positive_int(env: Mapping[str, str], name: str, default: int) -> int:
     if not raw.isdigit() or int(raw) <= 0:
         raise SettingsError(f"{name} must be a positive integer")
     return int(raw)
+
+
+def _default_frontend_dir() -> str | None:
+    """A source checkout serves frontend/dist when it has been built."""
+    dist = Path(__file__).resolve().parents[4] / "frontend" / "dist"
+    return str(dist) if (dist / "index.html").is_file() else None

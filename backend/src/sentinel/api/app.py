@@ -14,6 +14,7 @@ from sqlalchemy import Engine
 
 from sentinel import __version__
 from sentinel.api.errors import install_error_handlers
+from sentinel.api.frontend import mount_frontend
 from sentinel.api.routes import (
     audit,
     auth,
@@ -44,7 +45,10 @@ def register_hooks() -> None:
 
 
 SECURITY_HEADERS = {
-    "Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'",
+    # Inline style attributes are allowed (the UI uses them); scripts are same-origin only.
+    "Content-Security-Policy": (
+        "default-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'"
+    ),
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "no-referrer",
@@ -105,4 +109,5 @@ def create_app(settings: Settings | None = None, engine: Engine | None = None) -
         publication.router,
     ):
         app.include_router(router)
+    mount_frontend(app, settings.frontend_dir)  # last: API routes take precedence
     return app
