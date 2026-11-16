@@ -26,3 +26,7 @@ dist/
 poc/01-validation/out/
 .env.dev
 frontend/public/_dev/
+.env.e2e
+frontend/e2e/.data/
+frontend/test-results/
+frontend/playwright-report/
