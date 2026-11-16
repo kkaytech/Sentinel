@@ -1,0 +1,281 @@
+# Default rule set for Supplier Invoices (FS §4.2, PRD §12.5).
+# Severity BLOCKING rules state `waivable`; false means non-waivable (BR-004).
+format: sentinel-rules/v1
+dataset_key: SUPINV
+reference_date_offset_days: 15
+rules:
+  # ---- schema ---------------------------------------------------------------------------
+  - id: INV_SCHEMA_REQUIRED
+    name: Required invoice columns present
+    type: required_column
+    table: invoices
+    params: {mode: missing}
+    severity: BLOCKING
+    waivable: false
+    kpis: [KPI-01, KPI-02, KPI-03, KPI-04]
+  - id: SUP_SCHEMA_REQUIRED
+    name: Required supplier columns present
+    type: required_column
+    table: suppliers
+    params: {mode: missing}
+    severity: BLOCKING
+    waivable: false
+    kpis: [KPI-01, KPI-02, KPI-03, KPI-04]
+  - id: INV_SCHEMA_EXTRA
+    name: Unexpected invoice column
+    type: required_column
+    table: invoices
+    params: {mode: extra}
+    severity: INFO
+  - id: SUP_SCHEMA_EXTRA
+    name: Unexpected supplier column
+    type: required_column
+    table: suppliers
+    params: {mode: extra}
+    severity: INFO
+
+  # ---- types ----------------------------------------------------------------------------
+  - id: INV_TYPE_AMOUNTS
+    name: Invoice amount is not a valid decimal
+    type: type_parse
+    table: invoices
+    params: {columns: [net_amount, tax_amount, gross_amount]}
+    severity: BLOCKING
+    waivable: false
+    impact: {category: POTENTIAL_EXPOSURE, basis: count_only}
+    kpis: [KPI-01, KPI-02, KPI-03, KPI-04]
+  - id: INV_TYPE_DATES
+    name: Invoice date is not a valid date
+    type: type_parse
+    table: invoices
+    params: {columns: [invoice_date, due_date]}
+    severity: BLOCKING
+    waivable: false
+    kpis: [KPI-01, KPI-02, KPI-03, KPI-04]
+  - id: SUP_TYPE_DATES
+    name: Supplier date is not a valid date
+    type: type_parse
+    table: suppliers
+    params: {columns: [active_from, active_to]}
+    severity: BLOCKING
+    waivable: false
+
+  # ---- keys and nulls -------------------------------------------------------------------
+  - id: INV_PK_UNIQUE
+    name: Duplicate or missing invoice ID
+    type: unique
+    table: invoices
+    params: {columns: [invoice_id], ignore_nulls: false}
+    severity: BLOCKING
+    waivable: false
+    impact: {category: POTENTIAL_EXPOSURE, basis: non_canonical_gross}
+    kpis: [KPI-01, KPI-02, KPI-03]
+  - id: SUP_PK_UNIQUE
+    name: Duplicate or missing supplier ID
+    type: unique
+    table: suppliers
+    params: {columns: [supplier_id], ignore_nulls: false}
+    severity: BLOCKING
+    waivable: false
+    kpis: [KPI-02]
+  - id: INV_NN_GROSS
+    name: Missing gross amount
+    type: not_null
+    table: invoices
+    params: {columns: [gross_amount]}
+    severity: BLOCKING
+    waivable: false
+    kpis: [KPI-01, KPI-02, KPI-03, KPI-04]
+  - id: INV_NN_CURRENCY
+    name: Missing currency
+    type: not_null
+    table: invoices
+    params: {columns: [currency]}
+    severity: BLOCKING
+    waivable: false
+    kpis: [KPI-01, KPI-02, KPI-03, KPI-04]
+  - id: INV_NN_SUPPLIER
+    name: Missing supplier ID
+    type: not_null
+    table: invoices
+    params: {columns: [supplier_id]}
+    severity: BLOCKING
+    waivable: true
+    impact: {category: POTENTIAL_EXPOSURE, basis: gross}
+    kpis: [KPI-02, KPI-04]
+  - id: INV_NN_OTHER
+    name: Missing required invoice value
+    type: not_null
+    table: invoices
+    params:
+      columns: [supplier_invoice_number, document_type, invoice_date, due_date,
+                net_amount, tax_amount, status]
+    severity: BLOCKING
+    waivable: true
+    kpis: [KPI-01, KPI-02, KPI-03]
+  - id: SUP_NN_OTHER
+    name: Missing required supplier value
+    type: not_null
+    table: suppliers
+    params: {columns: [supplier_name, country_code, default_currency, status, active_from]}
+    severity: BLOCKING
+    waivable: true
+    kpis: [KPI-02]
+
+  # ---- duplicates and references ----------------------------------------------------------
+  - id: INV_DUP_ROWS
+    name: Exact duplicate invoice rows
+    type: duplicate_rows
+    table: invoices
+    params: {}
+    severity: BLOCKING
+    waivable: true
+    impact: {category: CONFIRMED_DISCREPANCY, basis: non_canonical_gross}
+    kpis: [KPI-01, KPI-02, KPI-03]
+  - id: INV_BK_UNIQUE
+    name: Duplicate invoice (business key)
+    type: unique
+    table: invoices
+    params:
+      columns: [supplier_id, supplier_invoice_number]
+      normalise: {supplier_invoice_number: [trim, upper]}
+      ignore_nulls: true
+    severity: BLOCKING
+    waivable: true
+    impact: {category: CONFIRMED_DISCREPANCY, basis: non_canonical_gross}
+    kpis: [KPI-01, KPI-02, KPI-03]
+  - id: INV_FK_SUPPLIER
+    name: Invoice references an unknown supplier
+    type: foreign_key
+    table: invoices
+    params: {column: supplier_id, ref_table: suppliers, ref_column: supplier_id}
+    severity: BLOCKING
+    waivable: true
+    impact: {category: POTENTIAL_EXPOSURE, basis: gross}
+    kpis: [KPI-02, KPI-04]
+
+  # ---- amounts --------------------------------------------------------------------------
+  - id: INV_SIGN_INVOICE
+    name: Invoice with a non-positive gross amount
+    type: range
+    table: invoices
+    params:
+      column: gross_amount
+      min: "0"
+      min_exclusive: true
+      when: {column: document_type, equals: INVOICE}
+    severity: BLOCKING
+    waivable: true
+    impact: {category: POTENTIAL_EXPOSURE, basis: abs_gross}
+    kpis: [KPI-01, KPI-02]
+  - id: INV_SIGN_CREDIT
+    name: Credit note with a non-negative gross amount
+    type: range
+    table: invoices
+    params:
+      column: gross_amount
+      max: "0"
+      max_exclusive: true
+      when: {column: document_type, equals: CREDIT_NOTE}
+    severity: BLOCKING
+    waivable: true
+    impact: {category: POTENTIAL_EXPOSURE, basis: abs_gross}
+    kpis: [KPI-01, KPI-02]
+  - id: INV_ARITH
+    name: Net plus tax does not equal gross
+    type: arithmetic_check
+    table: invoices
+    params: {lhs: [net_amount, tax_amount], op: sum, rhs: gross_amount, tolerance: "0.01"}
+    severity: BLOCKING
+    waivable: true
+    impact: {category: CONFIRMED_DISCREPANCY, basis: abs_difference}
+    kpis: [KPI-01, KPI-02]
+
+  # ---- warnings -------------------------------------------------------------------------
+  - id: INV_DUE_BEFORE_INVOICE
+    name: Due date before invoice date
+    type: column_comparison
+    table: invoices
+    params: {left: due_date, op: "<", right: invoice_date}
+    severity: WARNING
+  - id: INV_CODE_CURRENCY
+    name: Invoice currency not in the allowed list
+    type: allowed_values
+    table: invoices
+    params: {column: currency, reference_list: currencies}
+    severity: WARNING
+    kpis: [KPI-01, KPI-02, KPI-03, KPI-04]
+  - id: INV_CODE_STATUS
+    name: Invalid invoice status
+    type: allowed_values
+    table: invoices
+    params: {column: status, values: [RECEIVED, APPROVED, PAID, CANCELLED]}
+    severity: WARNING
+    kpis: [KPI-01, KPI-02, KPI-03]
+  - id: INV_CODE_DOCTYPE
+    name: Invalid document type
+    type: allowed_values
+    table: invoices
+    params: {column: document_type, values: [INVOICE, CREDIT_NOTE]}
+    severity: WARNING
+    kpis: [KPI-01, KPI-03]
+  - id: SUP_CODE_CURRENCY
+    name: Supplier default currency not in the allowed list
+    type: allowed_values
+    table: suppliers
+    params: {column: default_currency, reference_list: currencies}
+    severity: WARNING
+  - id: SUP_CODE_COUNTRY
+    name: Invalid supplier country code
+    type: allowed_values
+    table: suppliers
+    params: {column: country_code, reference_list: countries}
+    severity: WARNING
+  - id: SUP_CODE_STATUS
+    name: Invalid supplier status
+    type: allowed_values
+    table: suppliers
+    params: {column: status, values: [ACTIVE, INACTIVE, BLOCKED]}
+    severity: WARNING
+  - id: SUP_ACTIVE_RANGE
+    name: Supplier active window ends before it starts
+    type: column_comparison
+    table: suppliers
+    params: {left: active_to, op: "<", right: active_from}
+    severity: WARNING
+  - id: INV_SUPPLIER_STATUS
+    name: Invoice for a blocked or inactive supplier
+    type: cross_table_condition
+    table: invoices
+    params:
+      join: {column: supplier_id, ref_table: suppliers, ref_column: supplier_id}
+      any_of:
+        - {ref_column: status, equals: BLOCKED}
+        - {column: invoice_date, op: "<", ref_column: active_from}
+        - {column: invoice_date, op: ">", ref_column: active_to}
+    severity: WARNING
+    impact: {category: POTENTIAL_EXPOSURE, basis: gross}
+    kpis: [KPI-02]
+  - id: INV_CURRENCY_MISMATCH
+    name: Invoice currency differs from the supplier default
+    type: cross_table_condition
+    table: invoices
+    params:
+      join: {column: supplier_id, ref_table: suppliers, ref_column: supplier_id}
+      any_of:
+        - {column: currency, op: "!=", ref_column: default_currency}
+    severity: WARNING
+  - id: INV_OUT_OF_PERIOD
+    name: Invoice dated outside the reporting period
+    type: date_window
+    table: invoices
+    params: {column: invoice_date, window: period}
+    severity: WARNING
+    kpis: [KPI-01, KPI-02, KPI-03]
+  - id: INV_FUTURE_DATED
+    name: Invoice dated after the reference date
+    type: date_window
+    table: invoices
+    params: {column: invoice_date, window: not_after_reference_date}
+    severity: WARNING
+    kpis: [KPI-01, KPI-02, KPI-03]

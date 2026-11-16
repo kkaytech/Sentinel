@@ -1,0 +1,26 @@
+# Secrets and local credentials
+.env
+.demo-credentials
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+dist/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# PoC working data (regenerate with scripts/generate_reference_data.py)
+poc/01-validation/out/

@@ -1,0 +1,252 @@
+{
+ "label": "A-corrected",
+ "dataset": "corrected",
+ "variant": "A (JSONB, primary key only)",
+ "work_mem_override_mb": null,
+ "runs": 5,
+ "warmup": 1,
+ "environment": {
+  "server_version": "18.4 (Homebrew)",
+  "database_locale": [
+   "C",
+   "C"
+  ],
+  "settings": {
+   "DateStyle": "ISO, MDY (configuration file)",
+   "TimeZone": "Asia/Dubai (configuration file)",
+   "autovacuum_worker_slots": "16 (configuration file)",
+   "default_text_search_config": "pg_catalog.english (configuration file)",
+   "dynamic_shared_memory_type": "posix (configuration file)",
+   "effective_cache_size": "5242888kB (default)",
+   "hash_mem_multiplier": "2 (default)",
+   "jit": "on (default)",
+   "lc_messages": "C (configuration file)",
+   "lc_monetary": "C (configuration file)",
+   "lc_numeric": "C (configuration file)",
+   "lc_time": "C (configuration file)",
+   "log_timezone": "Asia/Dubai (configuration file)",
+   "max_connections": "100 (configuration file)",
+   "max_parallel_workers_per_gather": "2 (default)",
+   "max_wal_size": "1024MB (configuration file)",
+   "min_wal_size": "80MB (configuration file)",
+   "port": "55433 (command line)",
+   "server_version": "18.4 (Homebrew) (default)",
+   "shared_buffers": "163848kB (configuration file)",
+   "work_mem": "4096kB (default)"
+  },
+  "host": {
+   "machine": "arm64",
+   "system": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+   "cpus": 8,
+   "python": "3.13.3"
+  }
+ },
+ "full_run_w1_w9": {
+  "median_s": 2.9036,
+  "max_s": 3.2208,
+  "runs_s": [
+   2.9036,
+   2.8352,
+   2.822,
+   3.0974,
+   3.2208
+  ]
+ },
+ "full_run_all_rules": {
+  "median_s": 3.335,
+  "max_s": 3.6465,
+  "runs_s": [
+   3.335,
+   3.2501,
+   3.2454,
+   3.5196,
+   3.6465
+  ]
+ },
+ "workloads": {
+  "P0": {
+   "title": "Primary-key uniqueness (feeds record keys)",
+   "statements": [
+    "INV_PK_UNIQUE"
+   ],
+   "median_s": 0.0941,
+   "max_s": 0.1023,
+   "runs_s": [
+    0.0941,
+    0.0883,
+    0.099,
+    0.0919,
+    0.1023
+   ]
+  },
+  "W1": {
+   "title": "Typed parse and sign range on amounts",
+   "statements": [
+    "INV_TYPE_AMOUNTS",
+    "INV_SIGN_INVOICE",
+    "INV_SIGN_CREDIT"
+   ],
+   "median_s": 0.506,
+   "max_s": 0.5292,
+   "runs_s": [
+    0.4642,
+    0.472,
+    0.506,
+    0.5281,
+    0.5292
+   ]
+  },
+  "W2": {
+   "title": "Date validity and reporting-period window",
+   "statements": [
+    "INV_TYPE_DATES",
+    "INV_OUT_OF_PERIOD"
+   ],
+   "median_s": 0.3772,
+   "max_s": 0.3989,
+   "runs_s": [
+    0.3762,
+    0.369,
+    0.3772,
+    0.3989,
+    0.3951
+   ]
+  },
+  "W3": {
+   "title": "Arithmetic check net + tax = gross",
+   "statements": [
+    "INV_ARITH"
+   ],
+   "median_s": 0.3182,
+   "max_s": 0.336,
+   "runs_s": [
+    0.3185,
+    0.3178,
+    0.3105,
+    0.3182,
+    0.336
+   ]
+  },
+  "W4": {
+   "title": "Business-key uniqueness",
+   "statements": [
+    "INV_BK_UNIQUE"
+   ],
+   "median_s": 0.21,
+   "max_s": 0.2137,
+   "runs_s": [
+    0.1948,
+    0.2106,
+    0.21,
+    0.1789,
+    0.2137
+   ]
+  },
+  "W5": {
+   "title": "Exact duplicate rows",
+   "statements": [
+    "INV_DUP_ROWS"
+   ],
+   "median_s": 0.4772,
+   "max_s": 0.5961,
+   "runs_s": [
+    0.5476,
+    0.4141,
+    0.4002,
+    0.4772,
+    0.5961
+   ]
+  },
+  "W6": {
+   "title": "Referential integrity invoices -> suppliers",
+   "statements": [
+    "INV_FK_SUPPLIER"
+   ],
+   "median_s": 0.0582,
+   "max_s": 0.1126,
+   "runs_s": [
+    0.0585,
+    0.0497,
+    0.0491,
+    0.0582,
+    0.1126
+   ]
+  },
+  "W7": {
+   "title": "Supplier status and active window",
+   "statements": [
+    "INV_SUPPLIER_STATUS"
+   ],
+   "median_s": 0.347,
+   "max_s": 0.3944,
+   "runs_s": [
+    0.328,
+    0.347,
+    0.3298,
+    0.3641,
+    0.3944
+   ]
+  },
+  "X1": {
+   "title": "Remaining catalogue rules (D-03, D-07, D-09, D-11)",
+   "statements": [
+    "INV_NN_SUPPLIER",
+    "INV_DUE_BEFORE_INVOICE",
+    "INV_CODE_CURRENCY",
+    "INV_CODE_STATUS",
+    "INV_CURRENCY_MISMATCH"
+   ],
+   "median_s": 0.3267,
+   "max_s": 0.3373,
+   "runs_s": [
+    0.3373,
+    0.3267,
+    0.3244,
+    0.3303,
+    0.3234
+   ]
+  },
+  "W8": {
+   "title": "Impact totals, de-duplicated, per currency",
+   "statements": [
+    "impact_totals"
+   ],
+   "median_s": 0.006,
+   "max_s": 0.0067,
+   "runs_s": [
+    0.0052,
+    0.0067,
+    0.0056,
+    0.0066,
+    0.006
+   ]
+  },
+  "W9": {
+   "title": "KPI-02 spend by supplier, as reported vs adjusted",
+   "statements": [
+    "kpi_02"
+   ],
+   "median_s": 0.6378,
+   "max_s": 0.7673,
+   "runs_s": [
+    0.6107,
+    0.6481,
+    0.6337,
+    0.7673,
+    0.6378
+   ]
+  }
+ },
+ "finding_record_counts": {
+  "INV_CODE_CURRENCY": 150,
+  "INV_CODE_STATUS": 150,
+  "INV_CURRENCY_MISMATCH": 550,
+  "INV_DUE_BEFORE_INVOICE": 300,
+  "INV_FK_SUPPLIER": 700,
+  "INV_OUT_OF_PERIOD": 300,
+  "INV_SUPPLIER_STATUS": 250
+ },
+ "catalogue_match": true,
+ "catalogue_problems": [],
+ "plans": {}
+}

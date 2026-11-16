@@ -1,0 +1,41 @@
+# Supplier Invoices dataset contract (PRD §12.2). PROVISIONAL until the product owner's
+# review (PRD OQ-01, ARD TQ-05).
+format: sentinel-contract/v1
+dataset_key: SUPINV
+name: Supplier Invoices
+period_granularity: month
+tables:
+  suppliers:
+    primary_key: [supplier_id]
+    columns:
+      - {name: supplier_id,      type: string,  required: true,  max_length: 20}
+      - {name: supplier_name,    type: string,  required: true,  max_length: 200}
+      - {name: country_code,     type: string,  required: true,  max_length: 2}
+      - {name: default_currency, type: string,  required: true,  max_length: 3}
+      - {name: status,           type: string,  required: true}
+      - {name: active_from,      type: date,    required: true}
+      - {name: active_to,        type: date,    required: false}
+      - {name: tax_id,           type: string,  required: false, max_length: 30, sensitive: true}
+  invoices:
+    primary_key: [invoice_id]
+    columns:
+      - {name: invoice_id,              type: string,        required: true, max_length: 30}
+      - {name: supplier_id,             type: string,        required: true, max_length: 20}
+      - {name: supplier_invoice_number, type: string,        required: true, max_length: 50}
+      - {name: document_type,           type: string,        required: true}
+      - {name: invoice_date,            type: date,          required: true}
+      - {name: due_date,                type: date,          required: true}
+      - {name: currency,                type: string,        required: true, max_length: 3}
+      - {name: net_amount,              type: "decimal(18,2)", required: true}
+      - {name: tax_amount,              type: "decimal(18,2)", required: true}
+      - {name: gross_amount,            type: "decimal(18,2)", required: true, monetary: true}
+      - {name: status,                  type: string,        required: true}
+      - {name: description,             type: string,        required: false, max_length: 500, untrusted_text: true}
+relationships:
+  - {from: invoices.supplier_id, to: suppliers.supplier_id}
+money:
+  amount_column: invoices.gross_amount
+  currency_column: invoices.currency
+reference_lists:
+  currencies: [GBP, EUR, USD]          # allowed list (provisional)
+  countries: iso-3166-alpha2           # bundled list, DEP-07

@@ -1,0 +1,43 @@
+{
+  "_comment": "Expected privileges for sentinel_app and sentinel_reader (ARD §7.3.2, Doc 4 §4). Update only together with a migration and the ARD matrix.",
+  "table": {
+    "sentinel_app": {
+      "app.users": ["INSERT", "SELECT"],
+      "app.user_roles": ["INSERT", "SELECT"],
+      "app.sessions": ["DELETE", "INSERT", "SELECT"],
+      "app.login_attempts": ["DELETE", "INSERT", "SELECT"],
+      "audit.events": ["INSERT", "SELECT"],
+      "app.config_versions": ["INSERT", "SELECT"],
+      "app.active_config": ["INSERT", "SELECT"],
+      "app.dataset_periods": ["INSERT", "SELECT"],
+      "app.dataset_versions": ["INSERT", "SELECT"],
+      "app.ingestion_attempts": ["INSERT", "SELECT"],
+      "app.column_profiles": ["INSERT", "SELECT"],
+      "data.raw_files": ["INSERT", "SELECT"],
+      "data.version_rows": ["INSERT", "SELECT"],
+      "app.validation_runs": ["INSERT", "SELECT"],
+      "app.findings": ["INSERT", "SELECT"],
+      "app.finding_records": ["INSERT", "SELECT"],
+      "app.impact_figures": ["INSERT", "SELECT"],
+      "app.run_impact_totals": ["INSERT", "SELECT"],
+      "app.kpi_values": ["INSERT", "SELECT"]
+    },
+    "sentinel_reader": {}
+  },
+  "column_update": {
+    "sentinel_app": {
+      "app.users": ["display_name", "is_active", "password_hash", "updated_at"],
+      "app.user_roles": ["revoked_at", "revoked_by"],
+      "app.sessions": ["last_seen_at"],
+      "app.active_config": ["activated_at", "contract_version_id", "rule_set_version_id"],
+      "app.dataset_periods": ["last_activity_at"],
+      "app.dataset_versions": ["status"],
+      "app.validation_runs": ["error_detail", "finding_counts", "finished_at", "not_evaluated", "status"]
+    },
+    "sentinel_reader": {}
+  },
+  "sequence_usage": {
+    "sentinel_app": ["app.login_attempts_id_seq", "audit.events_id_seq"],
+    "sentinel_reader": []
+  }
+}

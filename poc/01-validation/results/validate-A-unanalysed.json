@@ -1,0 +1,545 @@
+{
+ "label": "A-unanalysed",
+ "dataset": "defective",
+ "variant": "A (JSONB, primary key only)",
+ "work_mem_override_mb": 64,
+ "runs": 3,
+ "warmup": 1,
+ "environment": {
+  "server_version": "18.4 (Homebrew)",
+  "database_locale": [
+   "C",
+   "C"
+  ],
+  "settings": {
+   "DateStyle": "ISO, MDY (configuration file)",
+   "TimeZone": "Asia/Dubai (configuration file)",
+   "autovacuum_worker_slots": "16 (configuration file)",
+   "default_text_search_config": "pg_catalog.english (configuration file)",
+   "dynamic_shared_memory_type": "posix (configuration file)",
+   "effective_cache_size": "5242888kB (default)",
+   "hash_mem_multiplier": "2 (default)",
+   "jit": "on (default)",
+   "lc_messages": "C (configuration file)",
+   "lc_monetary": "C (configuration file)",
+   "lc_numeric": "C (configuration file)",
+   "lc_time": "C (configuration file)",
+   "log_timezone": "Asia/Dubai (configuration file)",
+   "max_connections": "100 (configuration file)",
+   "max_parallel_workers_per_gather": "2 (default)",
+   "max_wal_size": "1024MB (configuration file)",
+   "min_wal_size": "80MB (configuration file)",
+   "port": "55433 (command line)",
+   "server_version": "18.4 (Homebrew) (default)",
+   "shared_buffers": "163848kB (configuration file)",
+   "work_mem": "4096kB (default)"
+  },
+  "host": {
+   "machine": "arm64",
+   "system": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+   "cpus": 8,
+   "python": "3.13.3"
+  }
+ },
+ "full_run_w1_w9": {
+  "median_s": 3.0007,
+  "max_s": 5.8137,
+  "runs_s": [
+   5.8137,
+   3.0007,
+   2.7848
+  ]
+ },
+ "full_run_all_rules": {
+  "median_s": 3.5954,
+  "max_s": 6.6509,
+  "runs_s": [
+   6.6509,
+   3.5954,
+   3.2639
+  ]
+ },
+ "workloads": {
+  "P0": {
+   "title": "Primary-key uniqueness (feeds record keys)",
+   "statements": [
+    "INV_PK_UNIQUE"
+   ],
+   "median_s": 0.2454,
+   "max_s": 0.2758,
+   "runs_s": [
+    0.2758,
+    0.2454,
+    0.129
+   ]
+  },
+  "W1": {
+   "title": "Typed parse and sign range on amounts",
+   "statements": [
+    "INV_TYPE_AMOUNTS",
+    "INV_SIGN_INVOICE",
+    "INV_SIGN_CREDIT"
+   ],
+   "median_s": 0.6766,
+   "max_s": 0.7023,
+   "runs_s": [
+    0.7023,
+    0.6766,
+    0.5035
+   ]
+  },
+  "W2": {
+   "title": "Date validity and reporting-period window",
+   "statements": [
+    "INV_TYPE_DATES",
+    "INV_OUT_OF_PERIOD"
+   ],
+   "median_s": 0.4211,
+   "max_s": 0.6907,
+   "runs_s": [
+    0.6907,
+    0.4211,
+    0.3817
+   ]
+  },
+  "W3": {
+   "title": "Arithmetic check net + tax = gross",
+   "statements": [
+    "INV_ARITH"
+   ],
+   "median_s": 0.3101,
+   "max_s": 1.053,
+   "runs_s": [
+    1.053,
+    0.3101,
+    0.3041
+   ]
+  },
+  "W4": {
+   "title": "Business-key uniqueness",
+   "statements": [
+    "INV_BK_UNIQUE"
+   ],
+   "median_s": 0.1823,
+   "max_s": 0.7166,
+   "runs_s": [
+    0.7166,
+    0.1823,
+    0.1696
+   ]
+  },
+  "W5": {
+   "title": "Exact duplicate rows",
+   "statements": [
+    "INV_DUP_ROWS"
+   ],
+   "median_s": 0.3732,
+   "max_s": 0.8099,
+   "runs_s": [
+    0.8099,
+    0.3723,
+    0.3732
+   ]
+  },
+  "W6": {
+   "title": "Referential integrity invoices -> suppliers",
+   "statements": [
+    "INV_FK_SUPPLIER"
+   ],
+   "median_s": 0.0874,
+   "max_s": 0.2855,
+   "runs_s": [
+    0.2855,
+    0.0806,
+    0.0874
+   ]
+  },
+  "W7": {
+   "title": "Supplier status and active window",
+   "statements": [
+    "INV_SUPPLIER_STATUS"
+   ],
+   "median_s": 0.367,
+   "max_s": 0.5445,
+   "runs_s": [
+    0.5445,
+    0.3514,
+    0.367
+   ]
+  },
+  "X1": {
+   "title": "Remaining catalogue rules (D-03, D-07, D-09, D-11)",
+   "statements": [
+    "INV_NN_SUPPLIER",
+    "INV_DUE_BEFORE_INVOICE",
+    "INV_CODE_CURRENCY",
+    "INV_CODE_STATUS",
+    "INV_CURRENCY_MISMATCH"
+   ],
+   "median_s": 0.3502,
+   "max_s": 0.5614,
+   "runs_s": [
+    0.5614,
+    0.3493,
+    0.3502
+   ]
+  },
+  "W8": {
+   "title": "Impact totals, de-duplicated, per currency",
+   "statements": [
+    "impact_totals"
+   ],
+   "median_s": 0.0191,
+   "max_s": 0.0293,
+   "runs_s": [
+    0.0293,
+    0.0191,
+    0.0171
+   ]
+  },
+  "W9": {
+   "title": "KPI-02 spend by supplier, as reported vs adjusted",
+   "statements": [
+    "kpi_02"
+   ],
+   "median_s": 0.5872,
+   "max_s": 0.9819,
+   "runs_s": [
+    0.9819,
+    0.5872,
+    0.5812
+   ]
+  }
+ },
+ "finding_record_counts": {
+  "INV_ARITH": 400,
+  "INV_BK_UNIQUE": 1440,
+  "INV_CODE_CURRENCY": 150,
+  "INV_CODE_STATUS": 150,
+  "INV_CURRENCY_MISMATCH": 550,
+  "INV_DUE_BEFORE_INVOICE": 300,
+  "INV_DUP_ROWS": 600,
+  "INV_FK_SUPPLIER": 700,
+  "INV_NN_SUPPLIER": 500,
+  "INV_OUT_OF_PERIOD": 350,
+  "INV_PK_UNIQUE": 600,
+  "INV_SIGN_CREDIT": 50,
+  "INV_SIGN_INVOICE": 150,
+  "INV_SUPPLIER_STATUS": 250,
+  "INV_TYPE_AMOUNTS": 250,
+  "INV_TYPE_DATES": 200
+ },
+ "catalogue_match": true,
+ "catalogue_problems": [],
+ "plans": {
+  "P0-INV_PK_UNIQUE": {
+   "execution_ms": 134.456,
+   "planning_ms": 0.084,
+   "version_rows_access": [
+    "Seq Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 17604,
+   "shared_read_blocks": 1040,
+   "worst_row_estimate": {
+    "ratio": 165.8,
+    "node": "WindowAgg",
+    "estimated": 99492,
+    "actual": 600
+   }
+  },
+  "W1-INV_TYPE_AMOUNTS": {
+   "execution_ms": 344.943,
+   "planning_ms": 0.127,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 7004,
+   "shared_read_blocks": 2,
+   "worst_row_estimate": {
+    "ratio": 5.9,
+    "node": "Bitmap Heap Scan",
+    "estimated": 1485,
+    "actual": 250
+   }
+  },
+  "W1-INV_SIGN_INVOICE": {
+   "execution_ms": 127.096,
+   "planning_ms": 0.111,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 6502,
+   "shared_read_blocks": 0,
+   "worst_row_estimate": {
+    "ratio": 5.2,
+    "node": "Bitmap Index Scan",
+    "estimated": 115,
+    "actual": 600
+   }
+  },
+  "W1-INV_SIGN_CREDIT": {
+   "execution_ms": 25.451,
+   "planning_ms": 0.112,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 5992,
+   "shared_read_blocks": 2,
+   "worst_row_estimate": {
+    "ratio": 5.2,
+    "node": "Bitmap Heap Scan",
+    "estimated": 116,
+    "actual": 600
+   }
+  },
+  "W2-INV_TYPE_DATES": {
+   "execution_ms": 203.191,
+   "planning_ms": 0.111,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 6754,
+   "shared_read_blocks": 2,
+   "worst_row_estimate": {
+    "ratio": 5.2,
+    "node": "Bitmap Heap Scan",
+    "estimated": 116,
+    "actual": 600
+   }
+  },
+  "W2-INV_OUT_OF_PERIOD": {
+   "execution_ms": 173.543,
+   "planning_ms": 0.102,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 7511,
+   "shared_read_blocks": 1,
+   "worst_row_estimate": {
+    "ratio": 158.7,
+    "node": "Bitmap Heap Scan",
+    "estimated": 55551,
+    "actual": 350
+   }
+  },
+  "W3-INV_ARITH": {
+   "execution_ms": 382.764,
+   "planning_ms": 0.108,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 7763,
+   "shared_read_blocks": 1,
+   "worst_row_estimate": {
+    "ratio": 83.3,
+    "node": "Bitmap Heap Scan",
+    "estimated": 33331,
+    "actual": 400
+   }
+  },
+  "W4-INV_BK_UNIQUE": {
+   "execution_ms": 236.647,
+   "planning_ms": 0.139,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 14113,
+   "shared_read_blocks": 3,
+   "worst_row_estimate": {
+    "ratio": 68.7,
+    "node": "WindowAgg",
+    "estimated": 98995,
+    "actual": 1440
+   }
+  },
+  "W5-INV_DUP_ROWS": {
+   "execution_ms": 391.568,
+   "planning_ms": 0.142,
+   "version_rows_access": [
+    "Seq Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 18294,
+   "shared_read_blocks": 963,
+   "worst_row_estimate": {
+    "ratio": 166.7,
+    "node": "Subquery Scan",
+    "estimated": 99992,
+    "actual": 600
+   }
+  },
+  "W6-INV_FK_SUPPLIER": {
+   "execution_ms": 100.752,
+   "planning_ms": 0.286,
+   "version_rows_access": [
+    "Bitmap Heap Scan",
+    "Seq Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 22122,
+   "shared_read_blocks": 866,
+   "worst_row_estimate": {
+    "ratio": 71.1,
+    "node": "Subquery Scan",
+    "estimated": 49746,
+    "actual": 700
+   }
+  },
+  "W7-INV_SUPPLIER_STATUS": {
+   "execution_ms": 410.843,
+   "planning_ms": 0.162,
+   "version_rows_access": [
+    "Bitmap Heap Scan",
+    "Seq Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 19263,
+   "shared_read_blocks": 775,
+   "worst_row_estimate": {
+    "ratio": 111.5,
+    "node": "Hash Join",
+    "estimated": 27887,
+    "actual": 250
+   }
+  },
+  "X1-INV_NN_SUPPLIER": {
+   "execution_ms": 71.095,
+   "planning_ms": 0.101,
+   "version_rows_access": [
+    "Seq Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 18472,
+   "shared_read_blocks": 682,
+   "worst_row_estimate": {
+    "ratio": 4.5,
+    "node": "Bitmap Index Scan",
+    "estimated": 132,
+    "actual": 600
+   }
+  },
+  "X1-INV_DUE_BEFORE_INVOICE": {
+   "execution_ms": 199.806,
+   "planning_ms": 0.109,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 7857,
+   "shared_read_blocks": 2,
+   "worst_row_estimate": {
+    "ratio": 111.1,
+    "node": "Bitmap Heap Scan",
+    "estimated": 33331,
+    "actual": 300
+   }
+  },
+  "X1-INV_CODE_CURRENCY": {
+   "execution_ms": 22.298,
+   "planning_ms": 0.111,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 6799,
+   "shared_read_blocks": 2,
+   "worst_row_estimate": {
+    "ratio": 653.3,
+    "node": "Bitmap Heap Scan",
+    "estimated": 98000,
+    "actual": 150
+   }
+  },
+  "X1-INV_CODE_STATUS": {
+   "execution_ms": 33.81,
+   "planning_ms": 0.113,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 6803,
+   "shared_read_blocks": 0,
+   "worst_row_estimate": {
+    "ratio": 650.0,
+    "node": "Bitmap Heap Scan",
+    "estimated": 97502,
+    "actual": 150
+   }
+  },
+  "X1-INV_CURRENCY_MISMATCH": {
+   "execution_ms": 117.486,
+   "planning_ms": 0.144,
+   "version_rows_access": [
+    "Bitmap Heap Scan",
+    "Seq Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 21483,
+   "shared_read_blocks": 673,
+   "worst_row_estimate": {
+    "ratio": 90.9,
+    "node": "Hash Join",
+    "estimated": 49996,
+    "actual": 550
+   }
+  },
+  "W8-impact_totals": {
+   "execution_ms": 32.035,
+   "planning_ms": 0.332,
+   "version_rows_access": [
+    "Index Scan (version_rows_pkey)"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 12151,
+   "shared_read_blocks": 5,
+   "worst_row_estimate": {
+    "ratio": 3007.0,
+    "node": "Index Scan",
+    "estimated": 1,
+    "actual": 3007
+   }
+  },
+  "W9-kpi_02": {
+   "execution_ms": 948.186,
+   "planning_ms": 0.202,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 63437,
+   "shared_read_blocks": 16,
+   "worst_row_estimate": {
+    "ratio": 5461.0,
+    "node": "Values Scan",
+    "estimated": 2,
+    "actual": 10922
+   }
+  }
+ }
+}
