@@ -2,10 +2,13 @@ import { defineConfig, devices } from "@playwright/test";
 
 // End-to-end tests run against a real API and a real PostgreSQL database. Nothing is mocked.
 // `scripts/e2e-backend.sh` resets the `sentinel_e2e` database and generates reference data.
-// Set E2E_BASE_URL to test an already running application (for example the built image).
+// E2E_BASE_URL tests the built UI served by the e2e backend instead of Vite.
+// E2E_EXTERNAL=1 with E2E_BASE_URL tests a stack that is already running (for example
+// Docker Compose); then no servers are started and E2E_PASSWORD is the demo users' password.
 const API_PORT = process.env.E2E_API_PORT ?? "8100";
 const WEB_PORT = "5174";
 const external = process.env.E2E_BASE_URL;
+const stackAlreadyRunning = process.env.E2E_EXTERNAL === "1";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -21,7 +24,9 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  webServer: [
+  webServer: stackAlreadyRunning
+    ? []
+    : [
     {
       command: "sh ../scripts/e2e-backend.sh",
       url: `http://127.0.0.1:${API_PORT}/health`,
@@ -42,5 +47,5 @@ export default defineConfig({
             env: { SENTINEL_API_URL: `http://127.0.0.1:${API_PORT}` },
           },
         ]),
-  ],
+      ],
 });

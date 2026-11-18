@@ -6,9 +6,6 @@ set -e
 cd "$(dirname "$0")/.."
 PYTHON="${SENTINEL_PYTHON:-backend/.venv/bin/python}"
 export SENTINEL_PYTHON="$PYTHON"
-DATA=frontend/e2e/.data
 "$PYTHON" scripts/dev_setup.py --database sentinel_e2e --reset
-rm -rf "$DATA"
-"$PYTHON" scripts/generate_reference_data.py --scale demo --dataset corrected --period 2026-09 --out "$DATA/2026-09" > /dev/null
-"$PYTHON" scripts/generate_reference_data.py --scale demo --dataset defective --period 2026-10 --out "$DATA/2026-10" > /dev/null
+sh scripts/e2e-data.sh
 ENV_FILE=.env.e2e PORT="${E2E_API_PORT:-8100}" exec sh scripts/dev-backend.sh

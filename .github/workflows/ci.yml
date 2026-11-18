@@ -126,22 +126,26 @@ jobs:
             frontend/test-results
 
   docker:
-    # Builds the image and starts the full Compose stack, then checks health and the UI.
+    # Builds the image, starts the full Compose stack on PostgreSQL 16 and runs the whole
+    # browser journey against it (scripts/e2e-docker.sh). The data generator and the
+    # verifier use the standard library only, so no backend install is needed here.
     runs-on: ubuntu-latest
+    env:
+      SENTINEL_PYTHON: python3
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
       - run: cp .env.example .env
-      - run: docker compose up --build --detach
-      - name: Wait for the application
-        run: |
-          for attempt in $(seq 1 60); do
-            curl --fail --silent http://127.0.0.1:8000/health && exit 0
-            sleep 2
-          done
-          exit 1
-      - run: curl --fail --silent http://127.0.0.1:8000/ | grep -q "<title>Sentinel</title>"
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: sh scripts/e2e-docker.sh
       - if: failure()
         run: docker compose logs
       - if: always()
         run: docker compose down --volumes
-
