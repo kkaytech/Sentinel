@@ -4,7 +4,7 @@
 |---|---|
 | Document | PoC-1 report (ARD §10.1 deliverable) |
 | Date | 2026-11-15 |
-| Status | Measured locally. **Evaluated and approved by the product owner on 2026-11-15:** variant A adopted and all four decisions below accepted (ARD v1.2 §10.1.1). The reference-environment run is still outstanding (ARD TQ-07). |
+| Status | Measured locally. **Evaluated and approved by the product owner on 2026-11-15:** variant A adopted and all four decisions below accepted (ARD v1.2 §10.1.1). PostgreSQL 16 reference run done on 2026-11-18 (below); it found and fixed two engine defects. |
 | Scripts, plans, raw results | [`poc/01-validation/`](../poc/01-validation/) · generator: [`scripts/generate_reference_data.py`](../scripts/generate_reference_data.py) |
 
 ## Result
@@ -21,6 +21,43 @@
 | 5. Findings match the catalogue | 100% | Exact match in every run | Pass |
 
 All 16 rules run together (W1–W9 plus primary-key uniqueness and the four rules for D-03, D-07, D-09 and D-11) take 3.49 s median, 4.04 s maximum.
+
+## PostgreSQL 16 reference run (2026-11-18, ARD TQ-07)
+
+Measured on the stock `postgres:16` image (16.16, default settings) in Docker Desktop, limited
+to 4 CPUs. **Difference from the reference environment:** Docker Desktop's VM had 4 GB of
+memory, not 8 GB. At default settings PostgreSQL uses 128 MB of shared buffers and no swapping
+was observed, so this is unlikely to matter, but it is not the specified environment.
+
+| Workload (100,000 invoices) | Limit | Measured | Result |
+|---|---|---|---|
+| W1–W9, engine settings (`work_mem` 64 MB, `jit` off, `enable_nestloop` off) | ≤ 60 s, target ≤ 30 s | 4.2 s median, 6.5 s max | Pass |
+| W1–W9, stock defaults | — | 8.6 s median; 4 sorts spill | For comparison |
+| Slowest single workload (W9) | ≤ 10 s median | 1.0 s | Pass |
+| W11 publish snapshot and hash | ≤ 30 s | 6.7 s median, 10.7 s max | Pass |
+| W10 harness ingestion, rows streamed from the Mac through Docker's port forward | ≤ 60 s | 19.4 s median; **one run of 110 s** | See below |
+| Real app: upload, then validate immediately, six new periods | ≤ 60 s (NFR-001) | upload 10.9–20.4 s, validation and impact 9.4–15.8 s; worst pair 35 s | Pass |
+| Catalogue match | 100% | Exact | Pass |
+
+**Two defects found and fixed.** Neither showed natively because Homebrew PostgreSQL has no
+LLVM, and the native harness ran `ANALYZE` after loading.
+1. **JIT compilation.** `postgres:16` JIT-compiles each expensive rule query, which cost
+   several seconds per query (one KPI query: 3.6 s to run, 5.6 s to compile). Whole runs took
+   105–214 s. The engine now sets `jit = off` in the validation transaction.
+2. **Stale statistics after a large upload.** The first run after two 100,000-row uploads
+   took 563 s, one cross-table query alone running for over 7 minutes. Run again once
+   autovacuum had analysed the table, the same version took 17 s. The app role cannot run
+   `ANALYZE`, so the engine now sets `enable_nestloop = off`, which keeps every rule on
+   hash or merge joins. With both fixes, six uploads each validated straight away took
+   9.4–15.8 s.
+
+**Open observation.** Two ingestions out of eighteen in total took 103–110 s, in both cases
+as the sixth consecutive 100,000-row load, while a WAL-triggered checkpoint was running. Disk
+throughput in the VM was 942 MB/s, there was no swapping, and uploads are otherwise
+CPU-bound in `COPY`. The six uploads after the fix did not reproduce it. Cause not
+established.
+
+Results: `poc/01-validation/results/*PG16*.json`; plans: `poc/01-validation/plans/PG16*`.
 
 ## Environment — differs from the reference environment
 

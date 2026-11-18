@@ -30,9 +30,20 @@ from sentinel.validation.rules import RunContext
 from sentinel.validation.tables import finding_records, findings, validation_runs
 
 PostStep = Callable[[Connection, RunOutcome], None]
-# PoC-1: set-level rules and the KPI aggregate spill sorts to disk at the 4 MB default.
-# Scoped to the completion transaction only (ARD §8.4). A constant, never user input.
-RUN_WORK_MEM_SQL = text("SET LOCAL work_mem = '64MB'")
+# Planner settings for the completion transaction only (ARD §8.4). Constants, never user input.
+RUN_SETTINGS = (
+    # PoC-1: set-level rules and the KPI aggregate spill sorts to disk at the 4 MB default.
+    text("SET LOCAL work_mem = '64MB'"),
+    # Each rule query is planned and run once. On postgres:16, JIT compiled most of them
+    # with LLVM first, which cost several seconds per query: whole runs took 105-214 s
+    # instead of seconds (measured at 100,000 invoices).
+    text("SET LOCAL jit = off"),
+    # Every rule reads a whole version, so a nested loop is never the right join. Right after
+    # a large upload, statistics do not cover the new version yet; PostgreSQL then guesses it
+    # is tiny and can choose nested loops. The app role cannot run ANALYZE (it owns no
+    # tables), so this setting keeps run time independent of when autovacuum last ran.
+    text("SET LOCAL enable_nestloop = off"),
+)
 SEVERITY_ORDER = {"BLOCKING": 0, "WARNING": 1, "INFO": 2}
 MAX_PAGE = 200
 
@@ -121,7 +132,8 @@ def execute_run(
     version_id: UUID | None = None
     try:
         with unit_of_work(engine) as conn:
-            conn.execute(RUN_WORK_MEM_SQL)
+            for setting in RUN_SETTINGS:
+                conn.execute(setting)
             run = conn.execute(select(validation_runs).where(validation_runs.c.id == run_id)).one()
             if run.status != "RUNNING":
                 raise SentinelError(409, "INVALID_TRANSITION", "The run is not RUNNING.")

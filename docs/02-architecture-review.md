@@ -1097,7 +1097,7 @@ None of these change requests adds a product capability (§1.1).
 | TQ-02 | Are the provider's data-usage and retention terms acceptable, even for synthetic data? (PRD OQ-10) | Product owner | Review of the provider's commercial terms | Before the first live AI call (including the evaluation run) |
 | TQ-03 | Approval of the evaluation spend (about $8 typical, about $27 worst case, for Stage 1) | Product owner | Explicit approval before the live harness runs | Before Stage 1 |
 | TQ-04 | Which storage variant (A, B or C) meets NFR-001? | Developer (measured) | **Closed 2026-11-15: variant A** (§10.1.1) | — |
-| TQ-07 | Does variant A also pass PoC-1 in the reference environment (`postgres:16`, Docker Compose, 4 vCPU)? PoC-1 was measured on PostgreSQL 18.4, natively on an 8-core Apple M1. | Developer (measured) | Re-run `poc/01-validation/poc.py` in CI or Docker | Before M1 is declared complete |
+| TQ-07 | Does variant A also pass PoC-1 in the reference environment (`postgres:16`, Docker Compose, 4 vCPU)? | Developer (measured) | **Measured 2026-11-18** on `postgres:16`, 4 CPUs, 4 GB (not 8 GB). Passes once the engine sets `jit = off` and `enable_nestloop = off` in the validation transaction. One unexplained ingestion outlier remains ([report](poc-01-validation-performance.md)). Closing it is the product owner's call. | Before M1 is declared complete |
 | TQ-05 | Are PRD OQ-01 (contract columns) and OQ-04 (KPIs) final? | Product owner | Confirmation before the typed `published` table migrations are written | Data model document |
 | TQ-06 | ~~Approval of the PRD amendment for CR-01 to CR-05~~ **Resolved 2026-11-15:** PRD v1.1 approved and applied | Product owner | — | — |
 

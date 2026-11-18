@@ -609,14 +609,18 @@ def test_execution_order_work_mem_and_stored_order(
 
     def capture(conn: Any, outcome: Any) -> None:
         seen["work_mem"] = conn.execute(text("SHOW work_mem")).scalar_one()
+        seen["nestloop"] = conn.execute(text("SHOW enable_nestloop")).scalar_one()
+        seen["jit"] = conn.execute(text("SHOW jit")).scalar_one()
 
     status = validation.execute_run(
         app_engine, run_id, post_steps=[capture], before_rule=lambda rule: order.append(rule.id)
     )
-    assert status == "COMPLETED" and seen["work_mem"] == "64MB"
+    assert status == "COMPLETED"
+    assert seen == {"work_mem": "64MB", "nestloop": "off", "jit": "off"}
     assert order[:2] == ["INV_PK_UNIQUE", "SUP_PK_UNIQUE"] and order[2:] == sorted(order[2:])
     with app_engine.connect() as conn:
         assert conn.execute(text("SHOW work_mem")).scalar_one() != "64MB"  # not leaked
+        assert conn.execute(text("SHOW enable_nestloop")).scalar_one() == "on"
     with owner_engine.connect() as conn:
         stored = conn.execute(
             text("SELECT rule_id FROM app.findings WHERE run_id = :r ORDER BY ctid"), {"r": run_id}

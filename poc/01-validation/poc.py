@@ -100,7 +100,9 @@ def cmd_setup(_: argparse.Namespace) -> None:
     owner = psycopg.conninfo.conninfo_to_dict(dsn("sentinel_owner"))
     url = "postgresql+psycopg://{user}:{password}@{host}:{port}/{dbname}".format(**owner)
     subprocess.run(
-        [str(REPO / "backend/.venv/bin/alembic"), "upgrade", "head"],
+        # The PoC defines its own tables on top of the baseline (schema.sql), so it stops at
+        # 0003; later migrations create the production versions of the same tables.
+        [str(REPO / "backend/.venv/bin/alembic"), "upgrade", "0003"],
         cwd=REPO / "backend", env={**os.environ, "SENTINEL_OWNER_DATABASE_URL": url}, check=True,
     )  # fmt: skip
     with psycopg.connect(dsn("sentinel_owner")) as conn:
@@ -210,7 +212,8 @@ def cmd_load(args: argparse.Namespace) -> None:
         result[key] = summary([m[key] for m in result["measured"]])
     STATE.write_text(json.dumps({"versions": versions}))
     RESULTS.mkdir(exist_ok=True)
-    (RESULTS / "W10-load.json").write_text(json.dumps(result, indent=1))
+    name = "W10-load.json" if args.label == "A" else f"W10-load-{args.label}.json"
+    (RESULTS / name).write_text(json.dumps(result, indent=1))
     print(f"W10 median {result['total_s']['median_s']}s max {result['total_s']['max_s']}s; "
           f"storage per version {result['storage_one_version']}")  # fmt: skip
 
@@ -349,6 +352,9 @@ def cmd_validate(args: argparse.Namespace) -> None:
             with cursor_cls(conn) as cur:
                 if args.work_mem:
                     cur.execute(f"SET LOCAL work_mem = '{int(args.work_mem)}MB'")
+                if args.engine_settings:  # what the application's engine sets (ARD §8.4)
+                    cur.execute("SET LOCAL jit = off")
+                    cur.execute("SET LOCAL enable_nestloop = off")
                 run_id, findings = start_run(cur, version_id)
                 base = wl.base_params(version_id, run_id, findings, start, end)
                 elapsed: dict[str, float] = {}
@@ -528,6 +534,8 @@ def main() -> None:
         if name == "validate":
             p.add_argument("--dataset", choices=DATASETS, default="defective")
             p.add_argument("--work-mem", type=int, help="SET LOCAL work_mem (MB) for the run")
+            p.add_argument("--engine-settings", action="store_true",
+                           help="also SET LOCAL jit = off and enable_nestloop = off")
             p.add_argument("--no-explain", action="store_true")
     args = parser.parse_args()
     args.func(args)

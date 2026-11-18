@@ -1,0 +1,570 @@
+{
+ "label": "PG16-workmem64",
+ "dataset": "defective",
+ "variant": "A (JSONB, primary key only)",
+ "work_mem_override_mb": 64,
+ "runs": 5,
+ "warmup": 1,
+ "environment": {
+  "server_version": "16.16 (Debian 16.16-1.pgdg13+1)",
+  "database_locale": [
+   "en_US.utf8",
+   "en_US.utf8"
+  ],
+  "settings": {
+   "DateStyle": "ISO, MDY (configuration file)",
+   "default_text_search_config": "pg_catalog.english (configuration file)",
+   "dynamic_shared_memory_type": "posix (configuration file)",
+   "effective_cache_size": "5242888kB (default)",
+   "hash_mem_multiplier": "2 (default)",
+   "jit": "on (default)",
+   "lc_messages": "en_US.utf8 (configuration file)",
+   "lc_monetary": "en_US.utf8 (configuration file)",
+   "lc_numeric": "en_US.utf8 (configuration file)",
+   "lc_time": "en_US.utf8 (configuration file)",
+   "listen_addresses": "* (configuration file)",
+   "log_timezone": "Etc/UTC (configuration file)",
+   "max_connections": "100 (configuration file)",
+   "max_parallel_workers_per_gather": "2 (default)",
+   "max_wal_size": "1024MB (configuration file)",
+   "min_wal_size": "80MB (configuration file)",
+   "server_version": "16.16 (Debian 16.16-1.pgdg13+1) (default)",
+   "shared_buffers": "163848kB (configuration file)",
+   "TimeZone": "Etc/UTC (configuration file)",
+   "work_mem": "4096kB (default)"
+  },
+  "host": {
+   "machine": "arm64",
+   "system": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+   "cpus": 8,
+   "python": "3.13.3"
+  }
+ },
+ "full_run_w1_w9": {
+  "median_s": 6.5676,
+  "max_s": 7.2198,
+  "runs_s": [
+   6.5676,
+   6.3802,
+   5.7089,
+   7.2198,
+   6.6315
+  ]
+ },
+ "full_run_all_rules": {
+  "median_s": 8.2447,
+  "max_s": 8.6982,
+  "runs_s": [
+   8.6462,
+   8.2447,
+   6.9463,
+   8.6982,
+   7.9023
+  ]
+ },
+ "workloads": {
+  "P0": {
+   "title": "Primary-key uniqueness (feeds record keys)",
+   "statements": [
+    "INV_PK_UNIQUE"
+   ],
+   "median_s": 0.3268,
+   "max_s": 0.4879,
+   "runs_s": [
+    0.2781,
+    0.4879,
+    0.2239,
+    0.3314,
+    0.3268
+   ]
+  },
+  "W1": {
+   "title": "Typed parse and sign range on amounts",
+   "statements": [
+    "INV_TYPE_AMOUNTS",
+    "INV_SIGN_INVOICE",
+    "INV_SIGN_CREDIT"
+   ],
+   "median_s": 0.7979,
+   "max_s": 1.0528,
+   "runs_s": [
+    0.6886,
+    0.7979,
+    0.6875,
+    1.0528,
+    0.8688
+   ]
+  },
+  "W2": {
+   "title": "Date validity and reporting-period window",
+   "statements": [
+    "INV_TYPE_DATES",
+    "INV_OUT_OF_PERIOD"
+   ],
+   "median_s": 0.7416,
+   "max_s": 0.9257,
+   "runs_s": [
+    0.7229,
+    0.7835,
+    0.7416,
+    0.9257,
+    0.6746
+   ]
+  },
+  "W3": {
+   "title": "Arithmetic check net + tax = gross",
+   "statements": [
+    "INV_ARITH"
+   ],
+   "median_s": 0.4749,
+   "max_s": 0.5931,
+   "runs_s": [
+    0.4749,
+    0.4501,
+    0.4419,
+    0.5931,
+    0.5814
+   ]
+  },
+  "W4": {
+   "title": "Business-key uniqueness",
+   "statements": [
+    "INV_BK_UNIQUE"
+   ],
+   "median_s": 0.8377,
+   "max_s": 1.0733,
+   "runs_s": [
+    0.685,
+    0.6288,
+    0.9304,
+    0.8377,
+    1.0733
+   ]
+  },
+  "W5": {
+   "title": "Exact duplicate rows",
+   "statements": [
+    "INV_DUP_ROWS"
+   ],
+   "median_s": 1.2722,
+   "max_s": 1.4567,
+   "runs_s": [
+    1.4567,
+    1.427,
+    0.998,
+    1.2722,
+    1.2219
+   ]
+  },
+  "W6": {
+   "title": "Referential integrity invoices -> suppliers",
+   "statements": [
+    "INV_FK_SUPPLIER"
+   ],
+   "median_s": 0.1966,
+   "max_s": 0.2993,
+   "runs_s": [
+    0.2993,
+    0.1966,
+    0.1604,
+    0.2311,
+    0.1551
+   ]
+  },
+  "W7": {
+   "title": "Supplier status and active window",
+   "statements": [
+    "INV_SUPPLIER_STATUS"
+   ],
+   "median_s": 0.7891,
+   "max_s": 1.0095,
+   "runs_s": [
+    0.7891,
+    1.0095,
+    0.581,
+    0.957,
+    0.5606
+   ]
+  },
+  "X1": {
+   "title": "Remaining catalogue rules (D-03, D-07, D-09, D-11)",
+   "statements": [
+    "INV_NN_SUPPLIER",
+    "INV_DUE_BEFORE_INVOICE",
+    "INV_CODE_CURRENCY",
+    "INV_CODE_STATUS",
+    "INV_CURRENCY_MISMATCH"
+   ],
+   "median_s": 1.147,
+   "max_s": 1.8005,
+   "runs_s": [
+    1.8005,
+    1.3766,
+    1.0135,
+    1.147,
+    0.9441
+   ]
+  },
+  "W8": {
+   "title": "Impact totals, de-duplicated, per currency",
+   "statements": [
+    "impact_totals"
+   ],
+   "median_s": 0.0367,
+   "max_s": 0.0428,
+   "runs_s": [
+    0.0428,
+    0.0385,
+    0.0319,
+    0.0328,
+    0.0367
+   ]
+  },
+  "W9": {
+   "title": "KPI-02 spend by supplier, as reported vs adjusted",
+   "statements": [
+    "kpi_02"
+   ],
+   "median_s": 1.3175,
+   "max_s": 1.459,
+   "runs_s": [
+    1.4083,
+    1.0483,
+    1.1362,
+    1.3175,
+    1.459
+   ]
+  }
+ },
+ "finding_record_counts": {
+  "INV_ARITH": 400,
+  "INV_BK_UNIQUE": 1440,
+  "INV_CODE_CURRENCY": 150,
+  "INV_CODE_STATUS": 150,
+  "INV_CURRENCY_MISMATCH": 550,
+  "INV_DUE_BEFORE_INVOICE": 300,
+  "INV_DUP_ROWS": 600,
+  "INV_FK_SUPPLIER": 700,
+  "INV_NN_SUPPLIER": 500,
+  "INV_OUT_OF_PERIOD": 350,
+  "INV_PK_UNIQUE": 600,
+  "INV_SIGN_CREDIT": 50,
+  "INV_SIGN_INVOICE": 150,
+  "INV_SUPPLIER_STATUS": 250,
+  "INV_TYPE_AMOUNTS": 250,
+  "INV_TYPE_DATES": 200
+ },
+ "catalogue_match": true,
+ "catalogue_problems": [],
+ "plans": {
+  "P0-INV_PK_UNIQUE": {
+   "execution_ms": 360.151,
+   "planning_ms": 0.551,
+   "version_rows_access": [
+    "Seq Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 18740,
+   "shared_read_blocks": 1123,
+   "worst_row_estimate": {
+    "ratio": 165.8,
+    "node": "WindowAgg",
+    "estimated": 99485,
+    "actual": 600
+   }
+  },
+  "W1-INV_TYPE_AMOUNTS": {
+   "execution_ms": 516.549,
+   "planning_ms": 0.207,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 8006,
+   "shared_read_blocks": 3,
+   "worst_row_estimate": {
+    "ratio": 600.0,
+    "node": "Index Only Scan",
+    "estimated": 1,
+    "actual": 600
+   }
+  },
+  "W1-INV_SIGN_INVOICE": {
+   "execution_ms": 185.151,
+   "planning_ms": 0.38,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 7296,
+   "shared_read_blocks": 1,
+   "worst_row_estimate": {
+    "ratio": 600.0,
+    "node": "Index Only Scan",
+    "estimated": 1,
+    "actual": 600
+   }
+  },
+  "W1-INV_SIGN_CREDIT": {
+   "execution_ms": 33.326,
+   "planning_ms": 0.147,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 6588,
+   "shared_read_blocks": 0,
+   "worst_row_estimate": {
+    "ratio": 600.0,
+    "node": "Index Only Scan",
+    "estimated": 1,
+    "actual": 600
+   }
+  },
+  "W2-INV_TYPE_DATES": {
+   "execution_ms": 301.852,
+   "planning_ms": 0.151,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 7647,
+   "shared_read_blocks": 7,
+   "worst_row_estimate": {
+    "ratio": 600.0,
+    "node": "Index Only Scan",
+    "estimated": 1,
+    "actual": 600
+   }
+  },
+  "W2-INV_OUT_OF_PERIOD": {
+   "execution_ms": 308.051,
+   "planning_ms": 0.139,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 8715,
+   "shared_read_blocks": 5,
+   "worst_row_estimate": {
+    "ratio": 600.0,
+    "node": "Index Only Scan",
+    "estimated": 1,
+    "actual": 600
+   }
+  },
+  "W3-INV_ARITH": {
+   "execution_ms": 424.338,
+   "planning_ms": 0.149,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 9062,
+   "shared_read_blocks": 3,
+   "worst_row_estimate": {
+    "ratio": 600.0,
+    "node": "Index Only Scan",
+    "estimated": 1,
+    "actual": 600
+   }
+  },
+  "W4-INV_BK_UNIQUE": {
+   "execution_ms": 715.528,
+   "planning_ms": 0.222,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 16409,
+   "shared_read_blocks": 14,
+   "worst_row_estimate": {
+    "ratio": 600.0,
+    "node": "Index Only Scan",
+    "estimated": 1,
+    "actual": 600
+   }
+  },
+  "W5-INV_DUP_ROWS": {
+   "execution_ms": 1217.586,
+   "planning_ms": 0.668,
+   "version_rows_access": [
+    "Seq Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 19266,
+   "shared_read_blocks": 1096,
+   "worst_row_estimate": {
+    "ratio": 600.0,
+    "node": "Index Only Scan",
+    "estimated": 1,
+    "actual": 600
+   }
+  },
+  "W6-INV_FK_SUPPLIER": {
+   "execution_ms": 178.58,
+   "planning_ms": 0.463,
+   "version_rows_access": [
+    "Bitmap Heap Scan",
+    "Seq Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 22662,
+   "shared_read_blocks": 1068,
+   "worst_row_estimate": {
+    "ratio": 600.0,
+    "node": "Index Only Scan",
+    "estimated": 1,
+    "actual": 600
+   }
+  },
+  "W7-INV_SUPPLIER_STATUS": {
+   "execution_ms": 912.044,
+   "planning_ms": 0.675,
+   "version_rows_access": [
+    "Bitmap Heap Scan",
+    "Seq Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 19502,
+   "shared_read_blocks": 1036,
+   "worst_row_estimate": {
+    "ratio": 600.0,
+    "node": "Index Only Scan",
+    "estimated": 1,
+    "actual": 600
+   }
+  },
+  "X1-INV_NN_SUPPLIER": {
+   "execution_ms": 103.1,
+   "planning_ms": 0.474,
+   "version_rows_access": [
+    "Seq Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 18659,
+   "shared_read_blocks": 1000,
+   "worst_row_estimate": {
+    "ratio": 600.0,
+    "node": "Index Only Scan",
+    "estimated": 1,
+    "actual": 600
+   }
+  },
+  "X1-INV_DUE_BEFORE_INVOICE": {
+   "execution_ms": 360.754,
+   "planning_ms": 0.219,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 8348,
+   "shared_read_blocks": 9,
+   "worst_row_estimate": {
+    "ratio": 600.0,
+    "node": "Index Only Scan",
+    "estimated": 1,
+    "actual": 600
+   }
+  },
+  "X1-INV_CODE_CURRENCY": {
+   "execution_ms": 378.559,
+   "planning_ms": 3.045,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 7301,
+   "shared_read_blocks": 2,
+   "worst_row_estimate": {
+    "ratio": 653.3,
+    "node": "Subquery Scan",
+    "estimated": 97993,
+    "actual": 150
+   }
+  },
+  "X1-INV_CODE_STATUS": {
+   "execution_ms": 199.409,
+   "planning_ms": 0.56,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 7301,
+   "shared_read_blocks": 1,
+   "worst_row_estimate": {
+    "ratio": 650.0,
+    "node": "Subquery Scan",
+    "estimated": 97496,
+    "actual": 150
+   }
+  },
+  "X1-INV_CURRENCY_MISMATCH": {
+   "execution_ms": 214.175,
+   "planning_ms": 0.228,
+   "version_rows_access": [
+    "Bitmap Heap Scan",
+    "Seq Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 21689,
+   "shared_read_blocks": 968,
+   "worst_row_estimate": {
+    "ratio": 600.0,
+    "node": "Index Only Scan",
+    "estimated": 1,
+    "actual": 600
+   }
+  },
+  "W8-impact_totals": {
+   "execution_ms": 30.357,
+   "planning_ms": 0.472,
+   "version_rows_access": [
+    "Index Scan (version_rows_pkey)"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 14466,
+   "shared_read_blocks": 0,
+   "worst_row_estimate": {
+    "ratio": 3007.0,
+    "node": "Index Scan",
+    "estimated": 1,
+    "actual": 3007
+   }
+  },
+  "W9-kpi_02": {
+   "execution_ms": 1176.321,
+   "planning_ms": 0.22,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 65297,
+   "shared_read_blocks": 7,
+   "worst_row_estimate": {
+    "ratio": 5461.0,
+    "node": "Values Scan",
+    "estimated": 2,
+    "actual": 10922
+   }
+  }
+ }
+}

@@ -1,0 +1,124 @@
+{
+ "workload": "W11",
+ "label": "PG16",
+ "environment": {
+  "server_version": "16.16 (Debian 16.16-1.pgdg13+1)",
+  "database_locale": [
+   "en_US.utf8",
+   "en_US.utf8"
+  ],
+  "settings": {
+   "DateStyle": "ISO, MDY (configuration file)",
+   "default_text_search_config": "pg_catalog.english (configuration file)",
+   "dynamic_shared_memory_type": "posix (configuration file)",
+   "effective_cache_size": "5242888kB (default)",
+   "hash_mem_multiplier": "2 (default)",
+   "jit": "on (default)",
+   "lc_messages": "en_US.utf8 (configuration file)",
+   "lc_monetary": "en_US.utf8 (configuration file)",
+   "lc_numeric": "en_US.utf8 (configuration file)",
+   "lc_time": "en_US.utf8 (configuration file)",
+   "listen_addresses": "* (configuration file)",
+   "log_timezone": "Etc/UTC (configuration file)",
+   "max_connections": "100 (configuration file)",
+   "max_parallel_workers_per_gather": "2 (default)",
+   "max_wal_size": "1024MB (configuration file)",
+   "min_wal_size": "80MB (configuration file)",
+   "server_version": "16.16 (Debian 16.16-1.pgdg13+1) (default)",
+   "shared_buffers": "163848kB (configuration file)",
+   "TimeZone": "Etc/UTC (configuration file)",
+   "work_mem": "4096kB (default)"
+  },
+  "host": {
+   "machine": "arm64",
+   "system": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+   "cpus": 8,
+   "python": "3.13.3"
+  }
+ },
+ "insert_s": {
+  "median_s": 5.6075,
+  "max_s": 9.1029,
+  "runs_s": [
+   9.1029,
+   5.5161,
+   5.6848,
+   5.6075,
+   4.9527
+  ]
+ },
+ "export_hash_s": {
+  "median_s": 1.1748,
+  "max_s": 1.5498,
+  "runs_s": [
+   1.5498,
+   1.0805,
+   1.0242,
+   1.2764,
+   1.1748
+  ]
+ },
+ "total_s": {
+  "median_s": 6.7091,
+  "max_s": 10.6527,
+  "runs_s": [
+   10.6527,
+   6.5966,
+   6.7091,
+   6.8838,
+   6.1275
+  ]
+ },
+ "snapshot_deterministic": true,
+ "snapshot": {
+  "snapshot_hash": "da320134661527906012cdf0aa4b51d7c06fd61387d223986ad4722f6d49bd90",
+  "tables": {
+   "invoices": {
+    "rows": 99260,
+    "sha256": "449b83260e49751782484d21f871412d0ead7854fc7216f7e83085129bf45f9e"
+   },
+   "suppliers": {
+    "rows": 5000,
+    "sha256": "61a1e2c0fcabef2ce237278fe52d1a5845418e0ac5ba8e60c3548b0c86321cee"
+   }
+  }
+ },
+ "plans": {
+  "W11-snapshot_suppliers": {
+   "execution_ms": 271.518,
+   "planning_ms": 0.45,
+   "version_rows_access": [
+    "Bitmap Heap Scan"
+   ],
+   "spills": [],
+   "temp_blocks_written": 0,
+   "shared_hit_blocks": 28027,
+   "shared_read_blocks": 0,
+   "worst_row_estimate": {
+    "ratio": 1.0,
+    "node": "Bitmap Index Scan",
+    "estimated": 5045,
+    "actual": 5000
+   }
+  },
+  "W11-snapshot_invoices": {
+   "execution_ms": 5852.3,
+   "planning_ms": 0.144,
+   "version_rows_access": [
+    "Seq Scan"
+   ],
+   "spills": [
+    "Sort: external merge 13280kB on disk"
+   ],
+   "temp_blocks_written": 1664,
+   "shared_hit_blocks": 616579,
+   "shared_read_blocks": 4972,
+   "worst_row_estimate": {
+    "ratio": 1.0,
+    "node": "Seq Scan",
+    "estimated": 100423,
+    "actual": 99260
+   }
+  }
+ }
+}

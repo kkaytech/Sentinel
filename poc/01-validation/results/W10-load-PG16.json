@@ -1,0 +1,177 @@
+{
+ "workload": "W10",
+ "measured": [
+  {
+   "version_id": "79249a3e-a002-40d6-a705-e670e21b928f",
+   "content_hash": "cdad4e66e34c4a665a1d9ba22fdda7e9bd5e35a919b97234deaf2cf2ced5cad5",
+   "row_counts": {
+    "invoices": 100000,
+    "suppliers": 5000
+   },
+   "parse_hash_s": 2.2729301252402365,
+   "insert_copy_s": 19.032412332948297,
+   "total_s": 21.305342458188534
+  },
+  {
+   "version_id": "df54857b-726e-4f94-98f7-39ac8260e143",
+   "content_hash": "cdad4e66e34c4a665a1d9ba22fdda7e9bd5e35a919b97234deaf2cf2ced5cad5",
+   "row_counts": {
+    "invoices": 100000,
+    "suppliers": 5000
+   },
+   "parse_hash_s": 2.8032952500507236,
+   "insert_copy_s": 16.635874667204916,
+   "total_s": 19.43916991725564
+  },
+  {
+   "version_id": "783ac07f-7009-4319-8df7-58b1be438ae5",
+   "content_hash": "cdad4e66e34c4a665a1d9ba22fdda7e9bd5e35a919b97234deaf2cf2ced5cad5",
+   "row_counts": {
+    "invoices": 100000,
+    "suppliers": 5000
+   },
+   "parse_hash_s": 2.2515462078154087,
+   "insert_copy_s": 14.77609358401969,
+   "total_s": 17.0276397918351
+  },
+  {
+   "version_id": "8d0eace7-4212-4734-9aba-dfbbdf62eeb7",
+   "content_hash": "cdad4e66e34c4a665a1d9ba22fdda7e9bd5e35a919b97234deaf2cf2ced5cad5",
+   "row_counts": {
+    "invoices": 100000,
+    "suppliers": 5000
+   },
+   "parse_hash_s": 2.5764674581587315,
+   "insert_copy_s": 16.764174167066813,
+   "total_s": 19.340641625225544
+  },
+  {
+   "version_id": "ea650e80-9b9d-44a0-bb3e-a343a512d12b",
+   "content_hash": "cdad4e66e34c4a665a1d9ba22fdda7e9bd5e35a919b97234deaf2cf2ced5cad5",
+   "row_counts": {
+    "invoices": 100000,
+    "suppliers": 5000
+   },
+   "parse_hash_s": 3.556470416020602,
+   "insert_copy_s": 106.94006745889783,
+   "total_s": 110.49653787491843
+  }
+ ],
+ "committed": {
+  "defective": {
+   "version_id": "9d088b9a-3626-4308-bbfa-f63234d7f0b9",
+   "content_hash": "cdad4e66e34c4a665a1d9ba22fdda7e9bd5e35a919b97234deaf2cf2ced5cad5",
+   "row_counts": {
+    "invoices": 100000,
+    "suppliers": 5000
+   },
+   "parse_hash_s": 4.017813750077039,
+   "insert_copy_s": 17.31677958322689,
+   "total_s": 21.33459333330393,
+   "commit_s": 0.012988457921892405
+  },
+  "corrected": {
+   "version_id": "78504407-b499-40e5-954b-754667391046",
+   "content_hash": "dd3b1b0a61e39b56c77765d61c9dc72fd880b7d0834c0895b247360668e4ee78",
+   "row_counts": {
+    "invoices": 99260,
+    "suppliers": 5000
+   },
+   "parse_hash_s": 2.0276250410825014,
+   "insert_copy_s": 8.901506667025387,
+   "total_s": 10.929131708107889,
+   "commit_s": 0.0028511672280728817
+  },
+  "clean": {
+   "version_id": "215f3554-a78b-492b-b256-110e7aac59f6",
+   "content_hash": "632237d131d5a50f51f2bf4659a9a6b6e82c3990c9ba588377e9c9c9a803e8a8",
+   "row_counts": {
+    "invoices": 99260,
+    "suppliers": 5000
+   },
+   "parse_hash_s": 3.2315930416807532,
+   "insert_copy_s": 8.876694125123322,
+   "total_s": 12.108287166804075,
+   "commit_s": 0.0069391666911542416
+  }
+ },
+ "environment": {
+  "server_version": "16.16 (Debian 16.16-1.pgdg13+1)",
+  "database_locale": [
+   "en_US.utf8",
+   "en_US.utf8"
+  ],
+  "settings": {
+   "DateStyle": "ISO, MDY (configuration file)",
+   "default_text_search_config": "pg_catalog.english (configuration file)",
+   "dynamic_shared_memory_type": "posix (configuration file)",
+   "effective_cache_size": "5242888kB (default)",
+   "hash_mem_multiplier": "2 (default)",
+   "jit": "on (default)",
+   "lc_messages": "en_US.utf8 (configuration file)",
+   "lc_monetary": "en_US.utf8 (configuration file)",
+   "lc_numeric": "en_US.utf8 (configuration file)",
+   "lc_time": "en_US.utf8 (configuration file)",
+   "listen_addresses": "* (configuration file)",
+   "log_timezone": "Etc/UTC (configuration file)",
+   "max_connections": "100 (configuration file)",
+   "max_parallel_workers_per_gather": "2 (default)",
+   "max_wal_size": "1024MB (configuration file)",
+   "min_wal_size": "80MB (configuration file)",
+   "server_version": "16.16 (Debian 16.16-1.pgdg13+1) (default)",
+   "shared_buffers": "163848kB (configuration file)",
+   "TimeZone": "Etc/UTC (configuration file)",
+   "work_mem": "4096kB (default)"
+  },
+  "host": {
+   "machine": "arm64",
+   "system": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+   "cpus": 8,
+   "python": "3.13.3"
+  }
+ },
+ "storage_one_version": {
+  "table_bytes": 43032576,
+  "index_bytes": 10477568,
+  "rows": 105000
+ },
+ "storage_three_versions": {
+  "table_bytes": 127991808,
+  "index_bytes": 24035328,
+  "rows": 313520
+ },
+ "analyzed_after_load": true,
+ "total_s": {
+  "median_s": 19.4392,
+  "max_s": 110.4965,
+  "runs_s": [
+   21.3053,
+   19.4392,
+   17.0276,
+   19.3406,
+   110.4965
+  ]
+ },
+ "parse_hash_s": {
+  "median_s": 2.5765,
+  "max_s": 3.5565,
+  "runs_s": [
+   2.2729,
+   2.8033,
+   2.2515,
+   2.5765,
+   3.5565
+  ]
+ },
+ "insert_copy_s": {
+  "median_s": 16.7642,
+  "max_s": 106.9401,
+  "runs_s": [
+   19.0324,
+   16.6359,
+   14.7761,
+   16.7642,
+   106.9401
+  ]
+ }
+}

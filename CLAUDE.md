@@ -95,7 +95,7 @@ Sentinel is a pre-publication data quality gate for monthly supplier invoice CSV
 | Single application | Implemented: the API serves `frontend/dist` with an index.html fallback (`api/frontend.py`); `sh scripts/run.sh` builds and starts it on :8000. The Dockerfile builds the UI in a node stage. |
 | PRD §18.2 negative matrix as one suite, `scripts/benchmark.py` | Not started (most negative cases are covered across `tests/api/`) |
 | Column profiling FR-005 (M3), `published.*_current` views (M3), AI explanations (M2) | Not started |
-| Docker Compose and CI | Written, **never executed**: the dev machine has no Docker runtime and the repo has no remote. The image's steps were emulated locally (clean non-editable install, migrate, start, serve UI, sign in) and passed. CI has lint, backend tests, frontend build, Playwright on PostgreSQL 16, and a Compose smoke job. Expect to fix small things on the first real run. |
+| Docker Compose and CI | Compose **verified locally on Docker Desktop (2026-11-18)**: image build, PostgreSQL 16 init, migrations, app health, and the full Playwright journey (`sh scripts/e2e-docker.sh`). **CI never executed** (the repo has no remote); its Docker job runs the same script. |
 
 **Outstanding, do not lose:**
 - **ARD TQ-07:** re-run PoC-1 in the reference environment (`postgres:16`, Docker, 4 vCPU). It was measured on PostgreSQL 18.4 natively.
@@ -103,7 +103,7 @@ Sentinel is a pre-publication data quality gate for monthly supplier invoice CSV
 - The Bash tool can stall after a test run finishes. Redirect pytest output to a log file and grep it.
 
 **Engine rules to keep (decided after PoC-1):**
-- The completion transaction starts with `SET LOCAL work_mem = '64MB'`.
+- The completion transaction applies `RUN_SETTINGS` in `validation/service.py`: `SET LOCAL work_mem = '64MB'`, `jit = off` and `enable_nestloop = off`. Do not remove the last two: on `postgres:16` (which has LLVM) JIT compilation made runs take 105–214 s instead of about 12 s, and right after a large upload stale statistics led to a 563 s run. Homebrew PostgreSQL has no LLVM, so local runs never show the JIT problem.
 - Each table's primary-key `unique` rule is evaluated first; findings are stored and shown in rule-ID order.
 - Currency columns in impact tables are `text`. An invalid currency is a finding, never an insert failure.
 - In SQLAlchemy Core, group or order by a subquery column, never by a repeated expression: each repeat gets its own bind parameter and PostgreSQL then rejects the `GROUP BY`.
