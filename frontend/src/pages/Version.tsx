@@ -122,7 +122,7 @@ export function VersionPage() {
               <dt>Version ID</dt>
               <dd><Hash value={v.id} /></dd>
               <dt>Content hash</dt>
-              <dd><Hash value={v.content_hash} length={24} /><div className="faint" style={{ fontSize: 12 }}>{v.hash_algorithm}</div></dd>
+              <dd><Hash value={v.content_hash} length={24} /><div className="faint" style={{ fontSize: 13 }}>{v.hash_algorithm}</div></dd>
               <dt>Status</dt>
               <dd>{v.status === "ACTIVE" ? "Active" : "Superseded"}</dd>
               <dt>Sequence</dt>

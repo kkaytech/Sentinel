@@ -149,3 +149,58 @@ export function CompareBars({ data }: { data: CompareDatum[] }) {
     </div>
   );
 }
+
+export interface SeriesValue {
+  label: string;
+  value: number;
+  color: string;
+  display: ReactNode;
+}
+
+// Several bars per row on one shared scale, so rows (for example periods) compare directly.
+export function SeriesBars({ rows }: { rows: { key: string; label: ReactNode; values: SeriesValue[] }[] }) {
+  const top = Math.max(0, ...rows.flatMap((r) => r.values.map((v) => Math.abs(v.value))));
+  return (
+    <div className="series">
+      {rows.map((r) => (
+        <div className="series-row" key={r.key}>
+          <div className="series-label">{r.label}</div>
+          <div className="series-bars">
+            {r.values.map((v) => (
+              <div className="series-bar" key={v.label} title={v.label}>
+                <div className="barlist-track" aria-hidden>
+                  <div className="barlist-fill" style={{ width: `${top > 0 ? (Math.abs(v.value) / top) * 100 : 0}%`, background: v.color }} />
+                </div>
+                <div className="barlist-value">
+                  <span className="sr-only">{v.label}: </span>
+                  {v.display}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// One stacked bar per row, scaled to the largest row total.
+export function StackRows({ rows }: { rows: { key: string; label: ReactNode; segments: Segment[]; total: ReactNode }[] }) {
+  const top = Math.max(0, ...rows.map((r) => r.segments.reduce((s, x) => s + x.value, 0)));
+  return (
+    <div className="stack-rows">
+      {rows.map((r) => {
+        const sum = r.segments.reduce((s, x) => s + x.value, 0);
+        return (
+          <div className="stack-row" key={r.key}>
+            <div className="series-label">{r.label}</div>
+            <div style={{ width: `${top > 0 ? Math.max((sum / top) * 100, sum > 0 ? 2 : 0) : 0}%`, minWidth: sum > 0 ? 8 : 0 }}>
+              {sum > 0 ? <StackBar segments={r.segments} label={String(r.key)} /> : <div className="stackbar" />}
+            </div>
+            <div className="barlist-value">{r.total}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}

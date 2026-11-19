@@ -13,14 +13,14 @@ import {
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DATASET, api, type AuditEvent, type Page, type PeriodRow, type Publication, type ReviewSummary } from "../api";
 import { useAuth } from "../auth";
-import { Donut, Legend } from "../components/Charts";
+import { BarList, Donut, Legend, SeriesBars, StackRows } from "../components/Charts";
 import { DataTable, type Column } from "../components/DataTable";
-import { Card, Empty, ErrorNotice, Kpi, Money, PageHeader, PageLoading, StateBadge } from "../components/ui";
-import { ago, compact, plural, useLoad } from "../lib";
+import { Card, Empty, ErrorNotice, Kpi, Money, PageHeader, PageLoading, Segmented, StateBadge } from "../components/ui";
+import { ago, compact, count, groupDigits, plural, useLoad } from "../lib";
 
 interface PeriodHealth {
   row: PeriodRow;
@@ -136,6 +136,178 @@ export function describeEvent(e: AuditEvent): { text: string; icon: LucideIcon; 
   return { text, icon: CircleDot, detail };
 }
 
+// ---- Executive summary ------------------------------------------------------------------
+type Stage = "published" | "ready" | "review" | "blocked" | "progress" | "pending";
+const STAGE_META: Record<Stage, { label: string; color: string }> = {
+  published: { label: "Published", color: "var(--teal-navy)" },
+  ready: { label: "Ready to publish", color: "var(--indigo)" },
+  review: { label: "Awaiting approval", color: "var(--orchid)" },
+  progress: { label: "Resolving issues", color: "var(--amber)" },
+  blocked: { label: "Needs corrected data", color: "var(--coral)" },
+  pending: { label: "Not validated", color: "var(--viz-muted)" },
+};
+
+function stageOf(h: PeriodHealth): Stage {
+  const s = h.summary;
+  if (h.row.derived_state === "PUBLISHED") return "published";
+  if (!h.row.current_version || !s?.current_run_id) return "pending";
+  if (s.eligibility.eligible) return "ready";
+  if (s.blocking_non_waivable_count > 0) return "blocked";
+  if (s.request?.status === "OPEN") return "review";
+  return "progress";
+}
+
+function ExecutiveSummary({ health }: { health: PeriodHealth[] }) {
+  const periods = [...health].filter((h) => h.summary).sort((a, b) => a.row.period.localeCompare(b.row.period));
+  const currencies = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const h of periods) for (const t of h.summary?.live?.impact_totals ?? []) totals.set(t.currency, (totals.get(t.currency) ?? 0) + Number(t.amount));
+    return [...totals.entries()].sort((a, b) => b[1] - a[1]).map(([c]) => c);
+  }, [periods]);
+  const [picked, setPicked] = useState<string | null>(null);
+  const currency = picked && currencies.includes(picked) ? picked : currencies[0];
+
+  const amount = (h: PeriodHealth, category: string) => h.summary?.live?.impact_totals.find((t) => t.category === category && t.currency === currency)?.amount ?? "0.00";
+  // Sum exact decimal strings in integer minor units, so the headline is exact.
+  const sum = (category: string) => {
+    const cents = periods.reduce((n, h) => n + BigInt(amount(h, category).replace(".", "").replace("-", "")) * (amount(h, category).startsWith("-") ? -1n : 1n), 0n);
+    const negative = cents < 0n;
+    const abs = (negative ? -cents : cents).toString().padStart(3, "0");
+    return `${negative ? "-" : ""}${abs.slice(0, -2)}.${abs.slice(-2)}`;
+  };
+  const confirmedTotal = sum("CONFIRMED_DISCREPANCY");
+  const potentialTotal = sum("POTENTIAL_EXPOSURE");
+
+  const stages = health.map(stageOf);
+  const stageSegments = (Object.keys(STAGE_META) as Stage[])
+    .map((k) => ({ key: k, label: STAGE_META[k].label, color: STAGE_META[k].color, value: stages.filter((s) => s === k).length }))
+    .filter((s) => s.value > 0);
+  const publishedShare = health.length ? Math.round((stages.filter((s) => s === "published").length / health.length) * 100) : 0;
+  const invoices = health.reduce((n, h) => n + (h.row.current_version?.row_counts.invoices ?? 0), 0);
+
+  const recurring = new Map<string, { rule: string; periods: number; records: number; blocking: boolean }>();
+  for (const h of periods)
+    for (const i of h.summary?.issues ?? []) {
+      const r = recurring.get(i.rule_id) ?? { rule: i.rule_id, periods: 0, records: 0, blocking: i.severity === "BLOCKING" };
+      r.periods += 1;
+      r.records += i.failing_count ?? 0;
+      recurring.set(i.rule_id, r);
+    }
+  const topRules = [...recurring.values()].sort((a, b) => b.records - a.records || b.periods - a.periods).slice(0, 7);
+
+  if (periods.length === 0) return null;
+  return (
+    <>
+      <div className="section-title">
+        <div>
+          <h2 style={{ fontSize: 18 }}>Executive summary</h2>
+          <div className="card-sub">Across every reporting period, from the current validation of each period's latest version.</div>
+        </div>
+        {currencies.length > 1 && <Segmented label="Reporting currency" value={currency ?? ""} onChange={setPicked} options={currencies.slice(0, 4).map((c) => ({ value: c, label: c }))} />}
+      </div>
+      <div className="split-wide" style={{ marginBottom: 16 }}>
+        <Card title="Financial impact by period" subtitle={currency ? `${currency}. Confirmed discrepancies are proven misstatements; potential exposure is uncertain value.` : undefined}>
+          {!currency ? (
+            <Empty compact title="No financial impact in any period" />
+          ) : (
+            <div className="stack">
+              <div className="row" style={{ gap: 32, alignItems: "flex-end" }}>
+                <div>
+                  <div className="exec-figure" title={`${groupDigits(confirmedTotal)} ${currency}`}>
+                    {compact(confirmedTotal)} <span style={{ fontSize: 16, color: "var(--faint)", fontWeight: 600 }}>{currency}</span>
+                  </div>
+                  <div className="exec-caption">Confirmed discrepancy, all periods</div>
+                </div>
+                <div>
+                  <div className="exec-figure" style={{ color: "var(--ink-2)" }} title={`${groupDigits(potentialTotal)} ${currency}`}>
+                    {compact(potentialTotal)} <span style={{ fontSize: 16, color: "var(--faint)", fontWeight: 600 }}>{currency}</span>
+                  </div>
+                  <div className="exec-caption">Potential exposure, all periods</div>
+                </div>
+                <div className="spacer" />
+                <Legend items={[{ label: "Confirmed discrepancy", color: "var(--viz-confirmed)" }, { label: "Potential exposure", color: "var(--viz-potential)" }]} />
+              </div>
+              <SeriesBars
+                rows={periods.map((h) => ({
+                  key: h.row.period,
+                  label: (
+                    <Link to={`/periods/${h.row.period}`} style={{ color: "inherit" }}>
+                      {h.row.period}
+                      <small>{STAGE_META[stageOf(h)].label}</small>
+                    </Link>
+                  ),
+                  values: [
+                    { label: "Confirmed discrepancy", value: Number(amount(h, "CONFIRMED_DISCREPANCY")), color: "var(--viz-confirmed)", display: <span className="money">{compact(amount(h, "CONFIRMED_DISCREPANCY"))}</span> },
+                    { label: "Potential exposure", value: Number(amount(h, "POTENTIAL_EXPOSURE")), color: "var(--viz-potential)", display: <span className="money">{compact(amount(h, "POTENTIAL_EXPOSURE"))}</span> },
+                  ],
+                }))}
+              />
+            </div>
+          )}
+        </Card>
+        <Card title="Publication readiness" subtitle="Where every period stands today">
+          <div className="stack" style={{ alignItems: "center" }}>
+            <Donut segments={stageSegments} size={168} thickness={18} value={`${publishedShare}%`} label="published" />
+            <div className="stack-sm" style={{ width: "100%" }}>
+              {stageSegments.map((s) => (
+                <div key={s.key} className="row" style={{ justifyContent: "space-between", flexWrap: "nowrap" }}>
+                  <Legend items={[{ label: s.label, color: s.color }]} />
+                  <strong className="num">{plural(s.value, "period")}</strong>
+                </div>
+              ))}
+              <div className="divider" style={{ margin: "6px 0" }} />
+              <div className="row muted" style={{ justifyContent: "space-between", fontSize: 13.5 }}>
+                <span>Invoices in current versions</span>
+                <strong className="num" style={{ color: "var(--ink)" }}>{count(invoices)}</strong>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+      <div className="grid-2" style={{ marginBottom: 8 }}>
+        <Card title="Findings by period" subtitle="Blocking findings and warnings on each period's current run" actions={<Legend items={[{ label: "Blocking", color: "var(--viz-confirmed)" }, { label: "Warnings", color: "var(--orchid)" }]} />}>
+          <StackRows
+            rows={periods.map((h) => {
+              const blocking = h.summary?.issues.filter((i) => i.severity === "BLOCKING").length ?? 0;
+              // Labelled with the stage so the row reads on its own.
+              const warnings = h.summary?.issues.filter((i) => i.severity === "WARNING").length ?? 0;
+              return {
+                key: h.row.period,
+                label: h.row.period,
+                segments: [
+                  { key: "b", label: "Blocking", value: blocking, color: "var(--viz-confirmed)" },
+                  { key: "w", label: "Warnings", value: warnings, color: "var(--orchid)" },
+                ],
+                total: blocking + warnings === 0 ? "Clean" : `${blocking} · ${warnings}`,
+              };
+            })}
+          />
+        </Card>
+        <Card title="Largest recurring issues" subtitle="Records affected across all periods, and how many periods each rule fails in">
+          {topRules.length === 0 ? (
+            <Empty compact title="No issues in any period" />
+          ) : (
+            <BarList
+              color="var(--indigo)"
+              data={topRules.map((r) => ({
+                key: r.rule,
+                label: <span className="rule-id" style={{ color: r.blocking ? "var(--danger)" : "var(--ink)" }}>{r.rule}</span>,
+                value: r.records,
+                color: r.blocking ? "var(--coral)" : "var(--orchid)",
+                display: <span>{plural(r.records, "record")} <span className="faint" style={{ fontWeight: 400 }}>· {plural(r.periods, "period")}</span></span>,
+                title: `${r.rule}: fails in ${r.periods} period(s), ${r.records} records`,
+              }))}
+            />
+          )}
+        </Card>
+      </div>
+      <div className="section-title">
+        <h2 style={{ fontSize: 18 }}>Operations</h2>
+      </div>
+    </>
+  );
+}
+
 export function OverviewPage() {
   const { session, has } = useAuth();
   const navigate = useNavigate();
@@ -156,8 +328,8 @@ export function OverviewPage() {
   const mix = [
     { key: "open", label: "Blocking, open", value: issues.filter((i) => i.severity === "BLOCKING" && i.state === "OPEN").length, color: "var(--viz-confirmed)" },
     { key: "requested", label: "Waiver requested", value: issues.filter((i) => i.state === "WAIVER_REQUESTED").length, color: "var(--viz-potential)" },
-    { key: "waived", label: "Waived", value: issues.filter((i) => i.state === "WAIVED").length, color: "var(--ok)" },
-    { key: "warnings", label: "Warnings", value: issues.filter((i) => i.severity === "WARNING").length, color: "#c4cede" },
+    { key: "waived", label: "Waived", value: issues.filter((i) => i.state === "WAIVED").length, color: "var(--viz-navy)" },
+    { key: "warnings", label: "Warnings", value: issues.filter((i) => i.severity === "WARNING").length, color: "var(--orchid)" },
   ];
 
   const insights: { icon: LucideIcon; tone: string; text: ReactNode }[] = [];
@@ -213,6 +385,8 @@ export function OverviewPage() {
         <Kpi label="Published" value={`${published}`} hint={data.publications[0] ? `Latest ${data.publications[0].publication_ref}` : "No publications yet"} icon={FileCheck2} tone="ok" />
       </div>
 
+      <ExecutiveSummary health={data.health} />
+
       <div className="split" style={{ marginBottom: 16 }}>
         <Card title="Reporting health" subtitle="Each period moves from upload to an immutable publication." flush>
           <DataTable
@@ -235,7 +409,7 @@ export function OverviewPage() {
               <Donut segments={mix} value={issues.length} label="issues" size={148} />
               <div style={{ width: "100%" }} className="stack-sm">
                 {mix.map((m) => (
-                  <div key={m.key} className="row" style={{ justifyContent: "space-between", fontSize: 13 }}>
+                  <div key={m.key} className="row" style={{ justifyContent: "space-between", fontSize: 14 }}>
                     <Legend items={[{ label: m.label, color: m.color }]} />
                     <strong className="num">{m.value}</strong>
                   </div>
@@ -276,7 +450,7 @@ export function OverviewPage() {
                     <div className="activity-text">
                       <strong>{d.text}</strong>
                       {d.detail && <span className="muted"> · {d.detail}</span>}
-                      <div className="faint" style={{ fontSize: 12 }}>
+                      <div className="faint" style={{ fontSize: 13 }}>
                         {e.actor_kind === "SYSTEM" ? "System" : "User"} · {e.entity_type.replace(/_/g, " ")}
                       </div>
                     </div>

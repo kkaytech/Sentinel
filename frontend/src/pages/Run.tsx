@@ -86,11 +86,11 @@ export function RunPage() {
   const passed = (config.data?.rules ?? []).filter((rule) => !failed.has(rule.id) && !skipped.has(rule.id));
   const counts = r.finding_counts ?? { BLOCKING: 0, WARNING: 0, INFO: 0 };
   const segments = [
-    { key: "passed", label: "Passed", value: passed.length, color: "var(--ok)" },
+    { key: "passed", label: "Passed", value: passed.length, color: "var(--viz-navy)" },
     { key: "blocking", label: "Blocking", value: counts.BLOCKING, color: "var(--viz-confirmed)" },
     { key: "warning", label: "Warnings", value: counts.WARNING, color: "var(--viz-potential)" },
-    { key: "info", label: "Information", value: counts.INFO, color: "var(--info)" },
-    { key: "skipped", label: "Not evaluated", value: r.not_evaluated.length, color: "#c4cede" },
+    { key: "info", label: "Information", value: counts.INFO, color: "var(--indigo)" },
+    { key: "skipped", label: "Not evaluated", value: r.not_evaluated.length, color: "var(--viz-muted)" },
   ];
   const by = (s: string) => all.filter((f) => f.severity === s).length;
 
@@ -101,8 +101,8 @@ export function RunPage() {
         <Card flush>
           <div className="stat-strip">
             <div>
-              <div className="label"><i style={{ background: "var(--ok)" }} />Rules passed</div>
-              <div className="value">{config.data ? passed.length : "—"}<span className="faint" style={{ fontSize: 14, fontWeight: 500 }}> / {config.data?.rules.length ?? "—"}</span></div>
+              <div className="label"><i style={{ background: "var(--viz-navy)" }} />Rules passed</div>
+              <div className="value">{config.data ? passed.length : "—"}<span className="faint" style={{ fontSize: 15, fontWeight: 500 }}> / {config.data?.rules.length ?? "—"}</span></div>
             </div>
             <div>
               <div className="label"><i style={{ background: "var(--viz-confirmed)" }} />Blocking</div>
@@ -113,7 +113,7 @@ export function RunPage() {
               <div className={`value ${counts.WARNING ? "text-warn" : ""}`}>{counts.WARNING}</div>
             </div>
             <div>
-              <div className="label"><i style={{ background: "#c4cede" }} />Not evaluated</div>
+              <div className="label"><i style={{ background: "var(--viz-muted)" }} />Not evaluated</div>
               <div className="value">{r.not_evaluated.length}</div>
             </div>
           </div>
@@ -178,7 +178,7 @@ export function RunPage() {
                   render: (f) => (
                     <div>
                       <Link to={`/findings/${f.id}`} className="rule-id" onClick={(e) => e.stopPropagation()}>{f.rule_id}</Link>
-                      <div className="faint" style={{ fontSize: 12 }}>{f.rule_type.replace(/_/g, " ")} · {f.table}</div>
+                      <div className="faint" style={{ fontSize: 13 }}>{f.rule_type.replace(/_/g, " ")} · {f.table}</div>
                     </div>
                   ),
                 },

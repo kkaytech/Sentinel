@@ -83,7 +83,7 @@ export function ImpactPage() {
           <>
             <div className="row" style={{ justifyContent: "space-between" }}>
               <Segmented label="Currency" value={currency} onChange={setPicked} options={currencies.map((c) => ({ value: c, label: invalid(c) ? `${c} (invalid)` : c }))} />
-              <span className="muted" style={{ fontSize: 13 }}>
+              <span className="muted" style={{ fontSize: 14 }}>
                 Figures are per currency. Sentinel never converts or combines currencies.
               </span>
             </div>
@@ -156,7 +156,7 @@ export function ImpactPage() {
                     />
                     <div className="stack-sm" style={{ width: "100%" }}>
                       {[confirmed, potential].filter(Boolean).map((t) => (
-                        <div key={t!.category} className="row" style={{ justifyContent: "space-between", fontSize: 13, flexWrap: "nowrap" }}>
+                        <div key={t!.category} className="row" style={{ justifyContent: "space-between", fontSize: 14, flexWrap: "nowrap" }}>
                           <Legend items={[{ label: CATEGORY_LABELS[t!.category], color: CATEGORY_COLORS[t!.category] }]} />
                           <span className="strong"><Money amount={t!.amount} currency={currency} /></span>
                         </div>

@@ -90,7 +90,7 @@ export function UsersPage() {
                       <span className="avatar" style={{ background: "var(--accent-soft)", color: "var(--accent-ink)" }} aria-hidden>{initials(u.display_name)}</span>
                       <span>
                         <strong style={{ color: "var(--ink)", fontWeight: 600 }}>{u.display_name}</strong>
-                        <div className="faint mono" style={{ fontSize: 12 }}>{u.username}</div>
+                        <div className="faint mono" style={{ fontSize: 13 }}>{u.username}</div>
                       </span>
                     </span>
                   ),

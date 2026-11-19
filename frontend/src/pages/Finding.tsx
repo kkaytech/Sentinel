@@ -139,8 +139,8 @@ export function FindingPage() {
                         <tr key={n}>
                           <td className="nowrap"><Badge tone={g.category === "CONFIRMED_DISCREPANCY" ? "danger" : "warn"}>{CATEGORY_LABELS[g.category] ?? g.category}</Badge></td>
                           <td className="right strong"><Money amount={g.amount} currency={g.currency} /></td>
-                          <td className="right">{g.record_count}{Number(g.inputs.unquantifiable_count ?? 0) > 0 && <div className="faint" style={{ fontSize: 12 }}>{String(g.inputs.unquantifiable_count)} not valued</div>}</td>
-                          <td className="wrap muted" style={{ fontSize: 12.5 }}>{g.assumption}</td>
+                          <td className="right">{g.record_count}{Number(g.inputs.unquantifiable_count ?? 0) > 0 && <div className="faint" style={{ fontSize: 13 }}>{String(g.inputs.unquantifiable_count)} not valued</div>}</td>
+                          <td className="wrap muted" style={{ fontSize: 13.5 }}>{g.assumption}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -191,7 +191,7 @@ export function FindingPage() {
                       <td className="right">{e.kpi_id === "KPI-03" ? `${Number(e.value).toLocaleString("en-GB")} invoices` : <Money amount={e.value} currency={e.currency} />}</td>
                       <td className="right nowrap">{e.delta_abs ? (e.kpi_id === "KPI-03" ? Number(e.delta_abs) : <Money amount={e.delta_abs} currency={e.currency} />) : "—"}{e.delta_pct && <span className="faint"> {e.delta_pct}%</span>}</td>
                       <td className="nowrap"><Badge tone={e.direction === "OVERSTATED" ? "danger" : e.direction === "UNDERSTATED" ? "warn" : "neutral"}>{e.direction?.toLowerCase()}</Badge></td>
-                      <td className="wrap muted" style={{ fontSize: 12.5 }}>{e.assumption}</td>
+                      <td className="wrap muted" style={{ fontSize: 13.5 }}>{e.assumption}</td>
                     </tr>
                   ))}
                 </tbody>

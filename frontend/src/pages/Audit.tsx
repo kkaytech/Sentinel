@@ -85,7 +85,7 @@ export function AuditPage() {
                               <span className={`activity-icon ${d.tone ?? ""}`} style={{ width: 24, height: 24 }} aria-hidden><d.icon /></span>
                               <span>
                                 <strong style={{ color: "var(--ink)", fontWeight: 550 }}>{d.text}</strong>
-                                <div className="faint mono" style={{ fontSize: 11 }}>{e.event_type}</div>
+                                <div className="faint mono" style={{ fontSize: 12 }}>{e.event_type}</div>
                               </span>
                             </span>
                           </td>
@@ -96,7 +96,7 @@ export function AuditPage() {
                           <tr>
                             <td />
                             <td colSpan={5} className="wrap">
-                              <pre className="mono" style={{ margin: 0, padding: 10, background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: 12 }}>
+                              <pre className="mono" style={{ margin: 0, padding: 10, background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: 13 }}>
                                 {JSON.stringify({ entity_id: e.entity_id, dataset_version_id: e.dataset_version_id, payload: e.payload }, null, 2)}
                               </pre>
                             </td>

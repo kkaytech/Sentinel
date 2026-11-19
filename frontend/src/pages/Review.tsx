@@ -250,7 +250,7 @@ export function ReviewPage() {
                 {open && (
                   <div className="stack">
                     <div className="tl-quote" style={{ marginTop: 0 }}>
-                      <div className="faint" style={{ fontSize: 12, marginBottom: 2 }}>{open.submitted_by?.display_name} · {ago(open.submitted_at)}</div>
+                      <div className="faint" style={{ fontSize: 13, marginBottom: 2 }}>{open.submitted_by?.display_name} · {ago(open.submitted_at)}</div>
                       {open.note}
                     </div>
                     {has("APPROVER") &&
