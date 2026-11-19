@@ -6,12 +6,9 @@ import { ConfirmDialog, Dialog } from "../components/Dialog";
 import { DataTable } from "../components/DataTable";
 import { Badge, Card, Empty, ErrorNotice, Notice, PageHeader, Skeleton } from "../components/ui";
 import { initials, toApiError, useLoad } from "../lib";
+import { ROLE_INFO } from "../roles";
 
-const ROLES: { role: Role; label: string; text: string }[] = [
-  { role: "ANALYST", label: "Analyst", text: "Uploads, validates, requests waivers, submits for review" },
-  { role: "APPROVER", label: "Approver", text: "Decides waivers and reviews" },
-  { role: "ADMIN", label: "Administrator", text: "Manages users and configuration" },
-];
+const ROLES: { role: Role; label: string; text: string }[] = (["ANALYST", "APPROVER", "ADMIN"] as Role[]).map((role) => ({ role, label: ROLE_INFO[role].label, text: ROLE_INFO[role].summary }));
 
 const EMPTY = { username: "", display_name: "", password: "", roles: ["ANALYST"] as Role[] };
 

@@ -22,7 +22,7 @@ export async function signIn(page: Page, username: string): Promise<void> {
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password").fill(demoPassword());
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Account menu for / })).toBeVisible();
 }
 
 // Each role gets its own browser context, exactly like two people on two machines.
@@ -38,7 +38,10 @@ export async function upload(page: Page, period: string): Promise<void> {
   await page.getByLabel("Reporting period").fill(period);
   await page.locator("#suppliers").setInputFiles(resolve(DATA, period, "suppliers.csv"));
   await page.locator("#invoices").setInputFiles(resolve(DATA, period, "invoices.csv"));
-  await page.getByRole("button", { name: "Upload" }).click();
+  await page.getByRole("button", { name: "Upload", exact: true }).click();
+  // The upload reports the version the backend created, then opens it.
+  await expect(page.getByRole("heading", { name: new RegExp(`Version SUPINV-${period}-v\\d+ created`) })).toBeVisible();
+  await page.getByRole("link", { name: "Open version" }).click();
   await expect(page).toHaveURL(/\/versions\/[0-9a-f-]+$/);
 }
 

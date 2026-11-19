@@ -20,6 +20,7 @@ export function DataTable<T>({
   empty,
   initialSort,
   caption,
+  rowClassName,
 }: {
   columns: Column<T>[];
   rows: T[];
@@ -28,6 +29,7 @@ export function DataTable<T>({
   empty?: ReactNode;
   initialSort?: { key: string; dir: "asc" | "desc" };
   caption?: string;
+  rowClassName?: (row: T) => string | undefined;
 }) {
   const [sort, setSort] = useState(initialSort ?? null);
   const sorted = useMemo(() => {
@@ -80,7 +82,7 @@ export function DataTable<T>({
         </thead>
         <tbody>
           {sorted.map((row) => (
-            <tr key={rowKey(row)} className={onRowClick ? "clickable" : undefined} onClick={onRowClick ? () => onRowClick(row) : undefined}>
+            <tr key={rowKey(row)} className={[onRowClick ? "clickable" : "", rowClassName?.(row) ?? ""].join(" ").trim() || undefined} onClick={onRowClick ? () => onRowClick(row) : undefined}>
               {columns.map((c) => (
                 <td key={c.key} className={`${c.align ?? ""} ${c.className ?? ""}`}>
                   {c.render(row)}

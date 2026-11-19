@@ -1,11 +1,11 @@
 import { BarChart3, CheckCircle2, Gavel, ListChecks, Search, SearchX } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { DATASET, api, type Finding, type Issue, type Page, type Run, type Version } from "../api";
 import { Legend, StackBar } from "../components/Charts";
 import { DataTable } from "../components/DataTable";
-import { Badge, Card, Empty, ErrorNotice, IssueState, Notice, PageHeader, PageLoading, Segmented, Severity, Skeleton, Tabs } from "../components/ui";
-import { count, useLoad, when } from "../lib";
+import { Badge, Card, Empty, ErrorNotice, IssueState, LoadError, Notice, PageHeader, PageLoading, Segmented, Severity, Skeleton, Tabs } from "../components/ui";
+import { count, useLoad, useUrlState, when } from "../lib";
 
 interface RuleConfig {
   id: string;
@@ -62,9 +62,14 @@ export function RunPage() {
   const findings = useLoad(() => api.get<Page<Finding>>(`/runs/${runId}/findings`), [runId]);
   const issues = useLoad(() => api.get<Page<Issue>>(`/runs/${runId}/issues`), [runId]);
   const config = useLoad(() => api.get<{ rules: RuleConfig[] }>(`/datasets/${DATASET}/config`), []);
-  const [query, setQuery] = useState("");
-  const [severity, setSeverity] = useState<SeverityFilter>("ALL");
-  const [status, setStatus] = useState<StatusFilter>("ALL");
+  // Search and filters live in the address, so returning from a finding restores them.
+  const [view, setView] = useUrlState({ q: "", severity: "ALL", status: "ALL" });
+  const query = view.q;
+  const severity = view.severity as SeverityFilter;
+  const status = view.status as StatusFilter;
+  const setQuery = (q: string) => setView({ q });
+  const setSeverity = (s: SeverityFilter) => setView({ severity: s });
+  const setStatus = (s: StatusFilter) => setView({ status: s });
 
   const issueOf = useMemo(() => new Map(issues.data?.items.map((i) => [i.finding_id, i])), [issues.data]);
   const all = findings.data?.items ?? [];
@@ -79,7 +84,7 @@ export function RunPage() {
 
   const r = run.data;
   if (run.loading && !r) return <PageLoading />;
-  if (!r) return <ErrorNotice error={run.error} />;
+  if (!r) return <LoadError error={run.error} onRetry={run.reload} />;
 
   const failed = new Set(all.map((f) => f.rule_id));
   const skipped = new Set(r.not_evaluated.map((n) => n.rule_id));

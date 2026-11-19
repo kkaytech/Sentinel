@@ -33,28 +33,31 @@ export function LoginPage() {
           <BrandMark />
           <div>
             <div className="brand-name">Sentinel</div>
-            <div className="brand-sub">Data quality gate</div>
+            <div className="brand-sub">Financial data intelligence</div>
           </div>
         </div>
         <div>
-          <h2>Can we publish this dataset, and what evidence supports that decision?</h2>
+          <span className="eyebrow">Pre-publication data quality gate</span>
+          <h2 style={{ marginTop: 12 }}>
+            <span className="gradient-text">Can we publish this dataset,</span> and what evidence supports that decision?
+          </h2>
           <p>Every reporting period is validated, quantified and approved by a second person before it can be published.</p>
           <div className="auth-points">
-            <div className="auth-point">
+            <div className="auth-point glass">
               <Scale aria-hidden />
               <div>
                 <strong>Deterministic validation</strong>
                 32 rules over every invoice, with exact record-level evidence.
               </div>
             </div>
-            <div className="auth-point">
+            <div className="auth-point glass">
               <BadgeCheck aria-hidden />
               <div>
                 <strong>Financial impact you can defend</strong>
                 Confirmed discrepancies and potential exposure, per currency.
               </div>
             </div>
-            <div className="auth-point">
+            <div className="auth-point glass">
               <Fingerprint aria-hidden />
               <div>
                 <strong>Verifiable publications</strong>
@@ -66,7 +69,7 @@ export function LoginPage() {
         <div className="brand-sub">Supplier invoices · monthly close</div>
       </section>
       <div className="auth-form-wrap">
-        <form className="auth-form" onSubmit={submit}>
+        <form className="auth-form glass" onSubmit={submit}>
           <div>
             <h1>Sign in</h1>
             <p className="muted" style={{ marginTop: 4 }}>
@@ -78,7 +81,10 @@ export function LoginPage() {
             <label className="field-label" htmlFor="username">
               Username
             </label>
-            <input id="username" className="input" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} required autoFocus />
+            <input id="username" className="input" autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value)} required autoFocus aria-describedby="username-hint" />
+            <span id="username-hint" className="field-hint">
+              Your Sentinel username, not an email address.
+            </span>
           </div>
           <div className="field">
             <label className="field-label" htmlFor="password">
@@ -86,7 +92,7 @@ export function LoginPage() {
             </label>
             <input id="password" className="input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
-          <button className="btn primary block" type="submit" disabled={busy} style={{ height: 38 }}>
+          <button className="btn primary block" type="submit" disabled={busy} style={{ height: 42 }}>
             {busy ? "Signing in…" : "Sign in"}
           </button>
         </form>

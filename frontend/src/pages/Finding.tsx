@@ -1,10 +1,9 @@
 import { Download, Rows3, Table2 } from "lucide-react";
-import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { api, type Finding, type FindingImpact, type FindingRecord, type Page, type Run, type Version } from "../api";
 import { Pager } from "../components/DataTable";
-import { Badge, Card, Empty, ErrorNotice, Money, Notice, PageHeader, PageLoading, Severity, Skeleton } from "../components/ui";
-import { CATEGORY_LABELS, KPI_NAMES, count, useLoad } from "../lib";
+import { Badge, Card, Empty, ErrorNotice, LoadError, Money, Notice, PageHeader, PageLoading, Severity, Skeleton } from "../components/ui";
+import { CATEGORY_LABELS, KPI_NAMES, count, useLoad, useUrlState } from "../lib";
 import { IssuePanel } from "./IssuePanel";
 
 const PAGE_SIZE = 50;
@@ -58,7 +57,9 @@ function RecordsTable({ records, grouped, order }: { records: FindingRecord[]; g
 
 export function FindingPage() {
   const { findingId = "" } = useParams();
-  const [offset, setOffset] = useState(0);
+  const [view, setView] = useUrlState({ offset: "0" });
+  const offset = Math.max(0, Number(view.offset) || 0);
+  const setOffset = (n: number) => setView({ offset: String(n) });
   const finding = useLoad(() => api.get<Finding>(`/findings/${findingId}`), [findingId]);
   const runId = finding.data?.run_id;
   const run = useLoad(() => (runId ? api.get<Run>(`/runs/${runId}`) : Promise.resolve(null)), [runId]);
@@ -69,7 +70,7 @@ export function FindingPage() {
 
   const f = finding.data;
   if (finding.loading && !f) return <PageLoading />;
-  if (!f) return <ErrorNotice error={finding.error} />;
+  if (!f) return <LoadError error={finding.error} onRetry={finding.reload} />;
   const grouped = records.data?.items.some((r) => r.group_no !== null) ?? false;
   const effects = (impact.data?.kpi_effects ?? []).filter((e) => e.direction !== "NONE");
   const share = f.evaluated_count ? (f.failing_count / f.evaluated_count) * 100 : 0;

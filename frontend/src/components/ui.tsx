@@ -1,8 +1,10 @@
-import { AlertCircle, AlertTriangle, Check, CheckCircle2, ChevronRight, Copy, Info, Inbox, type LucideIcon } from "lucide-react";
-import { useState, type ReactNode } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronRight, Copy, Info, Inbox, RotateCw, type LucideIcon } from "lucide-react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import type { ApiError } from "../api";
 import { groupDigits } from "../lib";
+import { useCountUp } from "../motion";
+import { arrivedFrom, rememberedUrl } from "../navigation";
 
 // ---- Layout -------------------------------------------------------------------------------
 export interface Crumb {
@@ -23,17 +25,23 @@ export function PageHeader({
   crumbs?: Crumb[];
   actions?: ReactNode;
 }) {
+  // A detail screen's parent is its nearest linked breadcrumb. Primary pages have no crumbs,
+  // so they get no Back button.
+  const parent = [...(crumbs ?? [])].reverse().find((c) => c.to);
   return (
     <>
       {crumbs && crumbs.length > 0 && (
-        <nav className="crumbs" aria-label="Breadcrumb">
-          {crumbs.map((c, n) => (
-            <span key={n} className="row" style={{ gap: 6 }}>
-              {n > 0 && <ChevronRight aria-hidden />}
-              {c.to ? <Link to={c.to}>{c.label}</Link> : <span>{c.label}</span>}
-            </span>
-          ))}
-        </nav>
+        <div className="page-nav">
+          {parent?.to && <BackButton to={parent.to} label={parent.label} />}
+          <nav className="crumbs" aria-label="Breadcrumb">
+            {crumbs.map((c, n) => (
+              <span key={n} className="row" style={{ gap: 6 }}>
+                {n > 0 && <ChevronRight aria-hidden />}
+                {c.to ? <Link to={rememberedUrl(c.to)}>{c.label}</Link> : <span aria-current="page">{c.label}</span>}
+              </span>
+            ))}
+          </nav>
+        </div>
       )}
       <header className="page-head">
         <div className="page-head-main">
@@ -46,6 +54,31 @@ export function PageHeader({
         {actions && <div className="page-actions">{actions}</div>}
       </header>
     </>
+  );
+}
+
+// Back to the parent screen as it was left: same filters, search, page and scroll position.
+export function BackButton({ to, label }: { to: string; label: string }) {
+  const navigate = useNavigate();
+  const target = rememberedUrl(to);
+  return (
+    <Link
+      to={target}
+      className="back-btn"
+      onClick={(e) => {
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        // Came straight from there: step back, so the browser's Forward still works.
+        if (arrivedFrom(target)) {
+          e.preventDefault();
+          navigate(-1);
+        }
+      }}
+    >
+      <ArrowLeft aria-hidden />
+      <span>
+        Back<span className="back-to"> to {label}</span>
+      </span>
+    </Link>
   );
 }
 
@@ -67,7 +100,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section className={`card ${className ?? ""}`}>
+    <section className={`card spotlight ${className ?? ""}`}>
       {(title || actions) && (
         <header className="card-head">
           <div className="card-head-text">
@@ -91,15 +124,24 @@ export function Kpi({
   hint,
   icon: Icon,
   tone,
+  spark,
+  to,
+  action,
 }: {
   label: string;
   value: ReactNode;
   hint?: ReactNode;
   icon?: LucideIcon;
   tone?: Tone;
+  spark?: ReactNode;
+  // A KPI with a destination is a link that drills into the figures behind it.
+  to?: string;
+  action?: string;
 }) {
-  return (
-    <div className={`kpi ${tone ? `tone-${tone}` : ""}`}>
+  const className = `kpi spotlight tilt ${tone ? `tone-${tone}` : ""}`;
+  const body = (
+    <>
+      <span className="kpi-accent" aria-hidden />
       <div className="kpi-top">
         <span className="kpi-label">{label}</span>
         {Icon && (
@@ -110,7 +152,31 @@ export function Kpi({
       </div>
       <div className="kpi-value">{value}</div>
       {hint && <div className="kpi-hint">{hint}</div>}
-    </div>
+      {to && action && (
+        <span className="kpi-link">
+          {action}
+          <ArrowRight aria-hidden />
+        </span>
+      )}
+      {spark && <div className="kpi-spark">{spark}</div>}
+    </>
+  );
+  return to ? (
+    <Link to={to} className={className} aria-label={`${label}. ${action ?? "Open"}`}>
+      {body}
+    </Link>
+  ) : (
+    <div className={className}>{body}</div>
+  );
+}
+
+// A number that counts up when it first appears and when it changes.
+export function CountUp({ value, format = (v) => Math.round(v).toLocaleString("en-GB") }: { value: number; format?: (v: number) => string }) {
+  const shown = useCountUp(value);
+  return (
+    <span className="num" aria-label={format(value)}>
+      <span aria-hidden>{format(shown)}</span>
+    </span>
   );
 }
 
@@ -256,6 +322,26 @@ export function Empty({ title, children, icon: Icon = Inbox, compact, action }: 
   );
 }
 
+// A failed load, with a way to try again.
+export function LoadError({ error, onRetry, title = "This view could not be loaded" }: { error: ApiError | null; onRetry?: () => void; title?: string }) {
+  return (
+    <div className="card state-card" role="alert">
+      <span className="empty-icon" aria-hidden>
+        <AlertCircle />
+      </span>
+      <h2>{title}</h2>
+      <p>{error?.message ?? "Something went wrong."}</p>
+      {error?.code && <span className="mono faint">{error.code}</span>}
+      {onRetry && (
+        <button type="button" className="btn" onClick={onRetry}>
+          <RotateCw aria-hidden />
+          Try again
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function Skeleton({ lines = 4 }: { lines?: number }) {
   return (
     <div className="loading-block" aria-busy="true" aria-label="Loading">
@@ -297,8 +383,17 @@ export function Segmented<T extends string>({
   onChange: (value: T) => void;
   label: string;
 }) {
+  // A thumb slides behind the pressed option.
+  const box = useRef<HTMLDivElement>(null);
+  const [thumb, setThumb] = useState<{ x: number; w: number } | null>(null);
+  const index = options.findIndex((o) => o.value === value);
+  useLayoutEffect(() => {
+    const button = box.current?.querySelectorAll<HTMLButtonElement>("button")[index];
+    setThumb(button && button.offsetTop < 8 ? { x: button.offsetLeft, w: button.offsetWidth } : null);
+  }, [index, options.length]);
   return (
-    <div className="segmented" role="group" aria-label={label}>
+    <div className={`segmented seg-glass ${thumb ? "has-thumb" : ""}`} role="group" aria-label={label} ref={box}>
+      {thumb && <span className="seg-thumb" aria-hidden style={{ width: thumb.w, transform: `translateX(${thumb.x}px)` }} />}
       {options.map((o) => (
         <button key={o.value} type="button" aria-pressed={o.value === value} onClick={() => onChange(o.value)}>
           {o.label}

@@ -1,11 +1,11 @@
 import { CircleDollarSign, Info, Scale, TrendingUp, UserX } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { DATASET, api, type Finding, type FindingImpact, type Page, type RunImpact } from "../api";
 import { BarList, CompareBars, Donut, Legend } from "../components/Charts";
 import { DataTable } from "../components/DataTable";
-import { Badge, Card, Empty, ErrorNotice, Kpi, Money, PageLoading, Segmented, Skeleton } from "../components/ui";
-import { CATEGORY_LABELS, CATEGORY_NOTES, KPI_NAMES, compact, groupDigits, plural, useLoad } from "../lib";
+import { Badge, Card, Empty, Kpi, LoadError, Money, PageLoading, Segmented, Skeleton } from "../components/ui";
+import { CATEGORY_LABELS, CATEGORY_NOTES, KPI_NAMES, compact, groupDigits, plural, useLoad, useUrlState } from "../lib";
 import { RunHeader, useRun } from "./Run";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -31,7 +31,9 @@ export function ImpactPage() {
   const { run, version } = useRun(runId);
   const impact = useLoad(() => api.get<RunImpact>(`/runs/${runId}/impact`), [runId]);
   const rules = useLoad(() => loadRuleImpacts(runId), [runId]);
-  const [picked, setPicked] = useState<string | null>(null);
+  const [view, setView] = useUrlState({ ccy: "" });
+  const picked = view.ccy || null;
+  const setPicked = (ccy: string) => setView({ ccy });
   const config = useLoad(() => api.get<{ contract_version: { contract: { reference_lists: Record<string, string[] | string> } } }>(`/datasets/${DATASET}/config`), []);
   const allowed = config.data?.contract_version.contract.reference_lists.currencies;
   const invalid = (c: string) => Array.isArray(allowed) && !allowed.includes(c);
@@ -46,9 +48,9 @@ export function ImpactPage() {
   const currency = picked && currencies.includes(picked) ? picked : (currencies[0] ?? "");
 
   if ((run.loading && !run.data) || (impact.loading && !impact.data)) return <PageLoading />;
-  if (!run.data) return <ErrorNotice error={run.error} />;
+  if (!run.data) return <LoadError error={run.error} onRetry={run.reload} />;
   const data = impact.data;
-  if (!data) return <ErrorNotice error={impact.error} />;
+  if (!data) return <LoadError error={impact.error} onRetry={impact.reload} />;
 
   const total = (category: string) => data.totals.find((t) => t.category === category && t.currency === currency);
   const confirmed = total("CONFIRMED_DISCREPANCY");

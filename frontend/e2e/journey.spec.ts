@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
-import { REPO, catalogue, sessionFor, signIn, upload } from "./helpers";
+import { DATA, REPO, catalogue, sessionFor, signIn, upload } from "./helpers";
 
 // The complete Sentinel journey against the real API and database (PRD §6.1).
 // Steps run in order and share the analyst's and the approver's sessions.
@@ -32,17 +32,18 @@ test("sign-in rejects a wrong password and accepts the right one", async ({ page
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("alert")).toContainText("UNAUTHENTICATED");
   await signIn(page, "analyst");
-  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Reporting health" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /Good (morning|afternoon|evening), Demo Analyst/ })).toBeVisible();
+  // The test database starts empty, so the overview shows its empty state.
+  await expect(page.getByText("No reporting periods yet").first()).toBeVisible();
 });
 
 test("roles see different actions", async ({ browser }) => {
   // The analyst can upload; the approver cannot. Neither can administer users.
   await analyst.goto("/periods");
-  await expect(analyst.getByRole("heading", { name: "Upload a period" })).toBeVisible();
+  await expect(analyst.getByRole("heading", { name: "Upload data" })).toBeVisible();
   await approver.goto("/periods");
   await expect(approver.getByRole("heading", { name: "Periods", exact: true })).toBeVisible();
-  await expect(approver.getByRole("heading", { name: "Upload a period" })).toHaveCount(0);
+  await expect(approver.getByRole("heading", { name: "Upload data" })).toHaveCount(0);
   await expect(analyst.getByRole("link", { name: "Users" })).toHaveCount(0);
 
   const admin = await sessionFor(browser, "admin");
@@ -112,6 +113,21 @@ test("corrected data: upload, validate and inspect", async () => {
   await analyst.goto(reviewUrl);
   await expect(analyst.getByText("UNRESOLVED_BLOCKING_ISSUES")).toBeVisible();
   await expect(analyst.getByText("MISSING_APPROVAL")).toBeVisible();
+});
+
+test("uploading identical files creates no version; the old upload address opens the periods page", async () => {
+  await analyst.goto(`/upload?period=${CLEAN}`);
+  await expect(analyst).toHaveURL(new RegExp(`/periods\\?period=${CLEAN}#upload$`));
+  await expect(analyst.getByLabel("Reporting period")).toHaveValue(CLEAN);
+  await analyst.locator("#suppliers").setInputFiles(resolve(DATA, CLEAN, "suppliers.csv"));
+  await analyst.locator("#invoices").setInputFiles(resolve(DATA, CLEAN, "invoices.csv"));
+  await analyst.getByRole("button", { name: "Upload", exact: true }).click();
+  await expect(analyst.getByRole("heading", { name: `No new version: identical to SUPINV-${CLEAN}-v1` })).toBeVisible();
+  await expect(analyst.getByRole("button", { name: "Run validation" })).toBeVisible();
+
+  await approver.goto("/upload");
+  await expect(approver.getByRole("heading", { name: "Periods", exact: true })).toBeVisible();
+  await expect(approver.locator("#suppliers")).toHaveCount(0);
 });
 
 test("waiver: the analyst requests, only the approver can grant", async () => {
@@ -198,4 +214,71 @@ test("a second publication for the same period is refused", async () => {
   await analyst.goto(reviewUrl);
   await expect(analyst.getByText("PERIOD_ALREADY_PUBLISHED")).toBeVisible();
   await expect(analyst.getByRole("button", { name: "Publish this version" })).toHaveCount(0);
+});
+
+test("the overview focuses on a period and the command palette jumps to it", async () => {
+  await analyst.goto("/");
+  const focus = analyst.getByRole("group", { name: "Focus period" });
+  await focus.getByRole("button", { name: new RegExp(`^${CLEAN}`) }).click();
+  await expect(focus.getByRole("button", { name: new RegExp(`^${CLEAN}`) })).toHaveAttribute("aria-pressed", "true");
+  await expect(analyst.getByText(`Period ${CLEAN}`).first()).toBeVisible();
+
+  await analyst.keyboard.press("Control+k");
+  const palette = analyst.getByRole("dialog", { name: "Jump to" });
+  await expect(palette).toBeVisible();
+  await palette.getByRole("textbox", { name: "Search" }).fill(DIRTY);
+  await expect(palette.getByRole("option", { name: new RegExp(`Period ${DIRTY}`) })).toBeVisible();
+  await analyst.keyboard.press("Enter");
+  await expect(analyst).toHaveURL(new RegExp(`/periods/${DIRTY}$`));
+});
+
+test("Back returns to the findings list with its filters, and browser Back and Forward agree", async () => {
+  await analyst.goto("/periods");
+  await analyst.getByRole("link", { name: DIRTY, exact: true }).click();
+  await analyst.getByRole("link", { name: "Open current version" }).click();
+  await analyst.getByRole("link", { name: "Findings", exact: true }).click();
+  await analyst.getByRole("group", { name: "Severity" }).getByRole("button", { name: /^Blocking/ }).click();
+  const search = analyst.getByPlaceholder("Search rule, message or column");
+  await search.fill("invoices");
+  await expect(analyst).toHaveURL(/severity=BLOCKING.*q=invoices|q=invoices.*severity=BLOCKING/);
+  const filtered = analyst.url();
+
+  await analyst.getByRole("link", { name: "INV_FK_SUPPLIER", exact: true }).click();
+  const back = analyst.getByRole("link", { name: "Back to Findings" });
+  await expect(back).toBeVisible();
+  await back.click();
+  await expect(analyst).toHaveURL(filtered);
+  await expect(search).toHaveValue("invoices");
+  await expect(analyst.getByRole("group", { name: "Severity" }).getByRole("button", { name: /^Blocking/ })).toHaveAttribute("aria-pressed", "true");
+
+  await analyst.goForward();
+  await expect(analyst).toHaveURL(/\/findings\/[0-9a-f-]+$/);
+  await analyst.goBack();
+  await expect(analyst).toHaveURL(filtered);
+
+  // Primary pages have no Back button.
+  await analyst.goto("/publications");
+  await expect(analyst.getByRole("heading", { name: "Publications", level: 1 })).toBeVisible();
+  await expect(analyst.locator(".back-btn")).toHaveCount(0);
+});
+
+test("the account menu shows the session's identity, opens the read-only profile and signs out", async ({ browser }) => {
+  const page = await sessionFor(browser, "approver");
+  const trigger = page.getByRole("button", { name: "Account menu for Demo Approver" });
+  await trigger.click();
+  const menu = page.getByRole("menu", { name: "Account" });
+  await expect(menu).toContainText("@approver");
+  await expect(menu).toContainText("Approver");
+  await expect(menu).toContainText("No email on record");
+  await menu.getByRole("menuitem", { name: "Profile and settings" }).click();
+  await expect(page.getByRole("heading", { name: "Profile and settings", level: 1 })).toBeVisible();
+  await expect(page.getByText("Read-only")).toBeVisible();
+  // Role-based: only administrators are pointed at user management.
+  await expect(page.locator("main").getByRole("link", { name: "Users" })).toHaveCount(0);
+
+  await trigger.click();
+  await page.getByRole("menuitem", { name: "Sign out" }).click();
+  await expect(page.getByLabel("Username")).toBeVisible();
+  expect(await page.evaluate(() => fetch("/api/v1/session").then((r) => r.status))).toBe(401);
+  await page.context().close();
 });

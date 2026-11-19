@@ -16,12 +16,15 @@ async function href(page: Page, name: string | RegExp): Promise<string> {
   return value;
 }
 
+// Animations off: the check is about layout, and blurred glass makes animated captures slow.
+test.use({ reducedMotion: "reduce" });
+
 test("no screen overflows horizontally at phone, tablet or desktop width", async ({ browser }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(420_000);
   const page = await sessionFor(browser, "analyst");
 
   // Collect one URL per screen by navigating the published September period.
-  const screens: Record<string, string> = { overview: "/", periods: "/periods", publications: "/publications", audit: "/audit" };
+  const screens: Record<string, string> = { overview: "/", profile: "/profile", periods: "/periods", publications: "/publications", audit: "/audit" };
   await page.goto("/periods");
   screens.period = await href(page, "2026-09");
   screens.version = await href(page, "SUPINV-2026-09-v1");

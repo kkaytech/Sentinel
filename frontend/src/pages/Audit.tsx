@@ -3,7 +3,7 @@ import { Fragment, useState } from "react";
 import { api, type AuditEvent, type Page } from "../api";
 import { Pager } from "../components/DataTable";
 import { Card, Empty, ErrorNotice, PageHeader, Skeleton } from "../components/ui";
-import { plural, useLoad, when } from "../lib";
+import { plural, useLoad, useUrlState, when } from "../lib";
 import { describeEvent } from "./Overview";
 
 const PAGE_SIZE = 50;
@@ -18,9 +18,12 @@ const EVENT_TYPES = [
 const ENTITY_TYPES = ["dataset_version", "dataset_period", "ingestion_attempt", "validation_run", "issue", "waiver", "review_request", "publication", "config", "user"];
 
 export function AuditPage() {
-  const [eventType, setEventType] = useState("");
-  const [entityType, setEntityType] = useState("");
-  const [offset, setOffset] = useState(0);
+  // Filters and the page live in the address, so returning to the audit trail restores them.
+  const [view, setView] = useUrlState({ event: "", entity: "", offset: "0" });
+  const eventType = view.event;
+  const entityType = view.entity;
+  const offset = Math.max(0, Number(view.offset) || 0);
+  const setOffset = (n: number) => setView({ offset: String(n) });
   const [expanded, setExpanded] = useState<number | null>(null);
   const query = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(offset) });
   if (eventType) query.set("event_type", eventType);
@@ -34,7 +37,7 @@ export function AuditPage() {
         <div className="table-tools">
           <div className="field" style={{ width: 240 }}>
             <label className="field-label" htmlFor="event-type">Event type</label>
-            <select id="event-type" className="select" value={eventType} onChange={(e) => { setEventType(e.target.value); setOffset(0); }}>
+            <select id="event-type" className="select" value={eventType} onChange={(e) => setView({ event: e.target.value, offset: "0" })}>
               <option value="">All events</option>
               {EVENT_TYPES.map((t) => (
                 <option key={t} value={t}>{describeEvent({ event_type: t, payload: {}, entity_type: "", entity_id: "" } as unknown as AuditEvent).text}</option>
@@ -43,7 +46,7 @@ export function AuditPage() {
           </div>
           <div className="field" style={{ width: 220 }}>
             <label className="field-label" htmlFor="entity-type">Entity type</label>
-            <select id="entity-type" className="select" value={entityType} onChange={(e) => { setEntityType(e.target.value); setOffset(0); }}>
+            <select id="entity-type" className="select" value={entityType} onChange={(e) => setView({ entity: e.target.value, offset: "0" })}>
               <option value="">All entities</option>
               {ENTITY_TYPES.map((t) => (
                 <option key={t} value={t}>{t.replace(/_/g, " ")}</option>

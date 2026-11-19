@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { DATASET, api, type Attempt, type PeriodDetail } from "../api";
 import { useAuth } from "../auth";
 import { DataTable } from "../components/DataTable";
-import { UploadForm } from "../components/Upload";
 import { Badge, Card, Empty, ErrorNotice, Hash, PageHeader, PageLoading, StateBadge } from "../components/ui";
 import { count, short, useLoad, when } from "../lib";
 
@@ -17,7 +16,7 @@ export function PeriodPage() {
   const { period = "" } = useParams();
   const { has } = useAuth();
   const navigate = useNavigate();
-  const { data, error, loading, reload } = useLoad(() => api.get<PeriodDetail>(`/datasets/${DATASET}/periods/${period}`), [period]);
+  const { data, error, loading } = useLoad(() => api.get<PeriodDetail>(`/datasets/${DATASET}/periods/${period}`), [period]);
   if (loading && !data) return <PageLoading />;
   const current = data?.versions.find((v) => v.status === "ACTIVE");
 
@@ -28,7 +27,16 @@ export function PeriodPage() {
         title={`Period ${period}`}
         badge={current ? <StateBadge state={current.derived_state} /> : undefined}
         subtitle={current ? <>Current version <Link to={`/versions/${current.id}`} className="mono">{current.label}</Link></> : "No version has been created for this period yet."}
-        actions={current ? <Link className="btn primary" to={`/versions/${current.id}`}>Open current version</Link> : undefined}
+        actions={
+          <>
+            {has("ANALYST") && (
+              <Link className="btn" to={`/periods?period=${period}#upload`}>
+                Upload new version
+              </Link>
+            )}
+            {current && <Link className="btn primary" to={`/versions/${current.id}`}>Open current version</Link>}
+          </>
+        }
       />
       <div className="stack">
         <ErrorNotice error={error} />
@@ -49,11 +57,6 @@ export function PeriodPage() {
                 { key: "uploaded", header: "Uploaded", className: "nowrap", render: (v) => <span className="muted">{when(v.created_at)} · {v.created_by.display_name}</span> },
               ]}
             />
-          </Card>
-        )}
-        {has("ANALYST") && (
-          <Card title="Upload a new version" subtitle="Corrections are made by uploading again. The current version is superseded and kept for the record.">
-            <UploadForm fixedPeriod={period} defaultPeriod={period} onDone={reload} />
           </Card>
         )}
         {data && (

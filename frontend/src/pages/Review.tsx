@@ -5,7 +5,7 @@ import { ApiError, api, type EligibilityCheck, type ReviewRequest, type ReviewSu
 import { useAuth } from "../auth";
 import { ConfirmDialog } from "../components/Dialog";
 import { DataTable } from "../components/DataTable";
-import { Badge, Card, Empty, ErrorNotice, IssueState, Money, Notice, PageHeader, PageLoading, Severity, StateBadge, Tabs } from "../components/ui";
+import { Badge, Card, Empty, ErrorNotice, IssueState, LoadError, Money, Notice, PageHeader, PageLoading, Severity, StateBadge, Tabs } from "../components/ui";
 import { CATEGORY_LABELS, ago, toApiError, useLoad, when } from "../lib";
 
 const CHECKS: Record<string, string> = {
@@ -142,7 +142,7 @@ export function ReviewPage() {
 
   const s = summary.data;
   if (summary.loading && !s) return <PageLoading />;
-  if (!s) return <ErrorNotice error={summary.error} />;
+  if (!s) return <LoadError error={summary.error} onRetry={summary.reload} />;
   const v = s.version;
   const request = s.request;
   const open = request?.status === "OPEN" ? request : null;

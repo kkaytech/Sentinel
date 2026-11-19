@@ -4,14 +4,38 @@
     {
       "name": "sentinel-api",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["scripts/dev-backend.sh"],
+      "runtimeArgs": [
+        "scripts/dev-backend.sh"
+      ],
       "port": 8000
     },
     {
       "name": "sentinel-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "frontend", "run", "dev"],
+      "runtimeArgs": [
+        "--prefix",
+        "frontend",
+        "run",
+        "dev"
+      ],
       "port": 5173
+    },
+    {
+      "name": "sentinel-e2e-api",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "scripts/e2e-backend.sh"
+      ],
+      "port": 8100
+    },
+    {
+      "name": "sentinel-e2e-web",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd frontend && SENTINEL_API_URL=http://127.0.0.1:8100 npx vite --host 127.0.0.1 --port 5174 --strictPort"
+      ],
+      "port": 5174
     }
   ]
 }

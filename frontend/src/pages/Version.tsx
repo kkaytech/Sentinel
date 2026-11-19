@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError, api, type Page, type Run, type Version } from "../api";
 import { useAuth } from "../auth";
 import { DataTable } from "../components/DataTable";
-import { Badge, Card, Empty, ErrorNotice, Hash, Kpi, Notice, PageHeader, PageLoading, StateBadge } from "../components/ui";
+import { Badge, Card, Empty, ErrorNotice, Hash, Kpi, LoadError, Notice, PageHeader, PageLoading, StateBadge } from "../components/ui";
 import { count, toApiError, useLoad, when } from "../lib";
 
 export function RunStatus({ run }: { run: Run }) {
@@ -41,7 +41,7 @@ export function VersionPage() {
 
   const v = version.data;
   if (version.loading && !v) return <PageLoading />;
-  if (!v) return <ErrorNotice error={version.error} />;
+  if (!v) return <LoadError error={version.error} onRetry={version.reload} />;
   const current = runs.data?.items.find((r) => r.is_current);
   const canRun = has("ANALYST") && v.status === "ACTIVE" && v.derived_state !== "PUBLISHED";
   const canDownload = has("ANALYST") || has("APPROVER");

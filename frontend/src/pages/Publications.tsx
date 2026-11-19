@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError, api, type Page, type Publication, type Verification } from "../api";
 import { DataTable } from "../components/DataTable";
-import { Badge, Card, Empty, ErrorNotice, Hash, Kpi, Money, Notice, PageHeader, PageLoading, Skeleton } from "../components/ui";
+import { Badge, Card, Empty, ErrorNotice, Hash, Kpi, LoadError, Money, Notice, PageHeader, PageLoading, Skeleton } from "../components/ui";
 import { CATEGORY_LABELS, count, toApiError, useLoad, when } from "../lib";
 
 interface Manifest {
@@ -68,7 +68,7 @@ export function PublicationPage() {
 
   const p = publication.data;
   if (publication.loading && !p) return <PageLoading />;
-  if (!p) return <ErrorNotice error={publication.error} />;
+  if (!p) return <LoadError error={publication.error} onRetry={publication.reload} />;
   const m = manifest.data;
   const verified = verification?.result === "VERIFIED";
 

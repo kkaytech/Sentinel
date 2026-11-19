@@ -57,8 +57,43 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return data as T;
 }
 
+// Multipart upload with real progress: XMLHttpRequest reports the bytes actually sent, which
+// fetch cannot. Errors are parsed exactly as in request().
+export interface UploadProgress {
+  loaded: number;
+  total: number;
+  // True once every byte is sent and the server is checking and storing the files.
+  sent: boolean;
+}
+
+function upload<T>(path: string, form: FormData, onProgress?: (p: UploadProgress) => void): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", BASE + path);
+    xhr.withCredentials = true;
+    if (csrfToken) xhr.setRequestHeader("X-CSRF-Token", csrfToken);
+    xhr.upload.onprogress = (e) => onProgress?.({ loaded: e.loaded, total: e.lengthComputable ? e.total : 0, sent: false });
+    xhr.upload.onload = () => onProgress?.({ loaded: 1, total: 1, sent: true });
+    xhr.onerror = () => reject(new ApiError(0, "NETWORK_ERROR", "The server could not be reached."));
+    xhr.onload = () => {
+      let data: { error?: { code?: string; message?: string; details?: Record<string, unknown> } } | null = null;
+      try {
+        data = JSON.parse(xhr.responseText);
+      } catch {
+        data = null;
+      }
+      if (xhr.status >= 200 && xhr.status < 300) return resolve(data as T);
+      const error = data?.error ?? {};
+      if (xhr.status === 401) onUnauthenticated?.();
+      reject(new ApiError(xhr.status, error.code ?? "HTTP_ERROR", error.message ?? `Request failed (${xhr.status}).`, error.details ?? {}));
+    };
+    xhr.send(form);
+  });
+}
+
 export const api = {
   get: <T>(path: string) => request<T>("GET", path),
+  upload,
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, body),
   patch: <T>(path: string, body?: unknown) => request<T>("PATCH", path, body),
   url: (path: string) => BASE + path,

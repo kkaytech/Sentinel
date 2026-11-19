@@ -1,7 +1,34 @@
 // Hooks and formatting shared by every screen. No data is computed here: values are only
 // formatted for display.
 import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ApiError } from "./api";
+
+// View state kept in the address (filters, search, page, selected period), so Back, Forward,
+// reload and shared links all return to the same view. Updates replace the current history
+// entry: changing a filter is not a navigation step of its own. Empty or default values are
+// left out of the address.
+export function useUrlState<K extends string>(defaults: Record<K, string>): [Record<K, string>, (patch: Partial<Record<K, string>>) => void] {
+  const [params, setParams] = useSearchParams();
+  const values = Object.fromEntries(Object.entries(defaults).map(([k, d]) => [k, params.get(k) ?? d])) as Record<K, string>;
+  const update = useCallback(
+    (patch: Partial<Record<K, string>>) =>
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          for (const [k, v] of Object.entries(patch) as [K, string][]) {
+            if (v === "" || v === defaults[k]) next.delete(k);
+            else next.set(k, v);
+          }
+          return next;
+        },
+        { replace: true, preventScrollReset: true },
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setParams],
+  );
+  return [values, update];
+}
 
 export function useLoad<T>(load: () => Promise<T>, deps: unknown[]) {
   const [data, setData] = useState<T | null>(null);
