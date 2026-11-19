@@ -101,6 +101,7 @@ export interface Version {
   created_by: { id: string; display_name: string };
   created_at: string;
   finding_counts: Counts;
+  publication_ref?: string | null;
 }
 
 export interface PeriodRow {
@@ -258,6 +259,7 @@ export interface Issue {
   waivable: boolean;
   state: "OPEN" | "WAIVER_REQUESTED" | "WAIVED" | "CLOSED_NOT_CURRENT";
   allowed_transitions: string[];
+  state_changed_at: string;
   message?: string;
   failing_count?: number;
 }

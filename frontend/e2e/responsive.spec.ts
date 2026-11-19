@@ -21,7 +21,7 @@ test("no screen overflows horizontally at phone, tablet or desktop width", async
   const page = await sessionFor(browser, "analyst");
 
   // Collect one URL per screen by navigating the published September period.
-  const screens: Record<string, string> = { periods: "/periods", publications: "/publications", audit: "/audit" };
+  const screens: Record<string, string> = { overview: "/", periods: "/periods", publications: "/publications", audit: "/audit" };
   await page.goto("/periods");
   screens.period = await href(page, "2026-09");
   screens.version = await href(page, "SUPINV-2026-09-v1");

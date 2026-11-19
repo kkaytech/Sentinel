@@ -32,7 +32,8 @@ test("sign-in rejects a wrong password and accepts the right one", async ({ page
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("alert")).toContainText("UNAUTHENTICATED");
   await signIn(page, "analyst");
-  await expect(page.getByRole("heading", { name: "Reporting periods" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Reporting health" })).toBeVisible();
 });
 
 test("roles see different actions", async ({ browser }) => {
@@ -46,7 +47,7 @@ test("roles see different actions", async ({ browser }) => {
 
   const admin = await sessionFor(browser, "admin");
   await admin.getByRole("link", { name: "Users" }).click();
-  await expect(admin.getByRole("cell", { name: "analyst", exact: true })).toBeVisible();
+  await expect(admin.getByText("analyst", { exact: true })).toBeVisible();
   await admin.context().close();
 });
 
@@ -74,8 +75,8 @@ test("defective data: validation finds the planted defects and cannot be publish
   // Drill into a duplicate finding: records, groups and a confirmed discrepancy.
   await analyst.getByRole("link", { name: "INV_BK_UNIQUE", exact: true }).click();
   await expect(analyst.getByText("Confirmed discrepancy").first()).toBeVisible();
-  await expect(analyst.getByText("(canonical)").first()).toBeVisible();
-  await expect(analyst.getByText("(duplicate)").first()).toBeVisible();
+  await expect(analyst.getByText("canonical", { exact: true }).first()).toBeVisible();
+  await expect(analyst.getByText("duplicate", { exact: true }).first()).toBeVisible();
 
   // A non-waivable rule offers no waiver.
   await analyst.goBack();
@@ -87,7 +88,7 @@ test("defective data: validation finds the planted defects and cannot be publish
   await analyst.goBack();
   await analyst.getByRole("link", { name: "Reporting impact" }).click();
   await expect(analyst.getByRole("heading", { name: "Version totals" })).toBeVisible();
-  await expect(analyst.getByText("OVERSTATED").first()).toBeVisible();
+  await expect(analyst.getByText("overstated", { exact: true }).first()).toBeVisible();
   await analyst.getByRole("link", { name: "Review and publish" }).click();
   await expect(analyst.getByRole("heading", { name: /Publication checklist — not eligible/ })).toBeVisible();
   await expect(analyst.getByText("NON_WAIVABLE_BLOCKING_ISSUES")).toBeVisible();
@@ -102,7 +103,7 @@ test("corrected data: upload, validate and inspect", async () => {
   await expect(analyst.getByText(cat.row_counts.invoices.toLocaleString("en-US"))).toBeVisible();
   await analyst.getByRole("button", { name: "Run validation" }).click();
   await expect(analyst).toHaveURL(/\/runs\/[0-9a-f-]+$/);
-  await expect(analyst.getByRole("heading", { name: "Blocking (1)" })).toBeVisible();
+  await expect(analyst.getByRole("group", { name: "Severity" }).getByRole("button", { name: /^Blocking/ })).toHaveText(/Blocking\s*1$/);
   // The data is dated inside its own period, so only planted rows are out of period.
   const outOfPeriod = analyst.getByRole("row").filter({ has: analyst.getByRole("link", { name: "INV_OUT_OF_PERIOD", exact: true }) });
   await expect(outOfPeriod.getByRole("cell").nth(3)).toHaveText(String(cat.expected_findings.INV_OUT_OF_PERIOD.rows.length));
@@ -130,11 +131,14 @@ test("waiver: the analyst requests, only the approver can grant", async () => {
   await expect(analyst.getByRole("button", { name: "Grant waiver" })).toHaveCount(0);
 
   await approver.goto(findingUrl);
-  await approver.getByRole("button", { name: "Deny" }).click(); // a denial needs a comment
+  // Decisions are confirmed in a dialog. A denial without a comment is refused by the server.
+  await approver.getByRole("button", { name: "Deny" }).click();
+  await approver.getByRole("dialog").getByRole("button", { name: "Deny waiver" }).click();
   await expect(approver.getByRole("alert").filter({ hasText: "VALIDATION_ERROR" })).toBeVisible();
   await approver.getByRole("button", { name: "Grant waiver" }).click();
+  await approver.getByRole("dialog").getByRole("button", { name: "Grant waiver" }).click();
   await expect(approver.getByRole("heading", { name: /Issue.*Waived/ })).toBeVisible();
-  await expect(approver.getByText("GRANT by Demo Approver")).toBeVisible();
+  await expect(approver.getByText("Granted by Demo Approver")).toBeVisible();
 });
 
 test("review: the analyst submits, the approver must acknowledge warnings to approve", async () => {
@@ -154,14 +158,16 @@ test("review: the analyst submits, the approver must acknowledge warnings to app
   await expect(approve).toBeDisabled();
   await approver.getByLabel(/I acknowledge the \d+ open warning/).check();
   await approve.click();
+  await approver.getByRole("dialog").getByRole("button", { name: "Approve version" }).click();
   await expect(approver.getByRole("heading", { name: /Publication checklist — eligible/ })).toBeVisible();
-  await expect(approver.getByText("APPROVE by Demo Approver")).toBeVisible();
+  await expect(approver.getByText("Approved by Demo Approver")).toBeVisible();
 });
 
 test("publish, verify and export the immutable publication", async () => {
   await analyst.goto(reviewUrl);
   await analyst.getByRole("button", { name: "Publish this version" }).click();
-  const link = analyst.getByRole("link", { name: `PUB-SUPINV-${CLEAN}-001` });
+  await analyst.getByRole("dialog").getByRole("button", { name: "Publish", exact: true }).click();
+  const link = analyst.getByRole("link", { name: `PUB-SUPINV-${CLEAN}-001` }).first();
   await expect(link).toBeVisible();
   await expect(analyst.getByRole("button", { name: "Publish this version" })).toHaveCount(0);
 
@@ -169,7 +175,7 @@ test("publish, verify and export the immutable publication", async () => {
   await expect(analyst.getByRole("heading", { name: `PUB-SUPINV-${CLEAN}-001` })).toBeVisible();
   await analyst.getByRole("button", { name: "Verify" }).click();
   await expect(analyst.getByText("VERIFIED")).toBeVisible();
-  const manifestSha = await analyst.locator("dt", { hasText: "Manifest SHA-256" }).locator("+ dd").innerText();
+  const manifestSha = (await analyst.locator("dt", { hasText: "Manifest SHA-256" }).locator("+ dd [data-value]").getAttribute("data-value")) ?? "";
 
   // The exported package verifies offline with the standard-library verifier.
   const download = analyst.waitForEvent("download");
@@ -184,8 +190,8 @@ test("publish, verify and export the immutable publication", async () => {
   const period = analyst.getByRole("row").filter({ has: analyst.getByRole("link", { name: CLEAN, exact: true }) });
   await expect(period.getByText("Published")).toBeVisible();
   await analyst.goto("/audit");
-  await analyst.getByLabel("Event type").fill("DATASET_PUBLISHED");
-  await expect(analyst.getByRole("cell", { name: "DATASET_PUBLISHED" })).toBeVisible();
+  await analyst.getByLabel("Event type").selectOption("DATASET_PUBLISHED");
+  await expect(analyst.getByText("DATASET_PUBLISHED", { exact: true })).toBeVisible();
 });
 
 test("a second publication for the same period is refused", async () => {

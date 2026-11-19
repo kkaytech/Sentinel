@@ -1,140 +1,68 @@
-import { useRef, useState, type FormEvent } from "react";
+import { CalendarRange } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { ApiError, DATASET, api, type Attempt, type Page, type PeriodRow, type Version } from "../api";
+import { DATASET, api, type Page, type PeriodRow } from "../api";
 import { useAuth } from "../auth";
-import { Card, Empty, ErrorBox, Loading, StateBadge, toApiError, useLoad } from "../ui";
-
-function currentPeriod(): string {
-  return new Date().toISOString().slice(0, 7);
-}
-
-export function UploadForm({ fixedPeriod, onDone }: { fixedPeriod?: string; onDone?: () => void }) {
-  const navigate = useNavigate();
-  const [period, setPeriod] = useState(fixedPeriod ?? currentPeriod());
-  const suppliers = useRef<HTMLInputElement>(null);
-  const invoices = useRef<HTMLInputElement>(null);
-  const [error, setError] = useState<ApiError | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function submit(event: FormEvent) {
-    event.preventDefault();
-    setBusy(true);
-    setError(null);
-    setNotice(null);
-    const form = new FormData();
-    const s = suppliers.current?.files?.[0];
-    const i = invoices.current?.files?.[0];
-    if (s) form.append("suppliers", s);
-    if (i) form.append("invoices", i);
-    try {
-      const result = await api.post<{ attempt: Attempt; version: Version }>(
-        `/datasets/${DATASET}/periods/${encodeURIComponent(period)}/ingestions`,
-        form,
-      );
-      if (result.attempt.status === "DUPLICATE_CONTENT") {
-        setNotice(`These files are identical to ${result.version.label}. No new version was created.`);
-        onDone?.();
-      } else {
-        navigate(`/versions/${result.version.id}`);
-      }
-    } catch (err) {
-      setError(toApiError(err));
-      onDone?.();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const structural = (error?.details.errors as { table: string; line: number; code: string }[] | undefined) ?? [];
-  return (
-    <form onSubmit={submit}>
-      <ErrorBox error={error} />
-      {error?.code === "INGESTION_STRUCTURAL_ERROR" && (
-        <div className="alert warn">
-          Showing {structural.length} of {String(error.details.total)} structural errors:
-          <ul>
-            {structural.slice(0, 20).map((e, n) => (
-              <li key={n}>
-                {e.table}.csv line {e.line}: {e.code}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {notice && <div className="alert info">{notice}</div>}
-      <div className="row">
-        <div className="field">
-          <label htmlFor="period">Reporting period</label>
-          <input id="period" type="month" value={period} onChange={(e) => setPeriod(e.target.value)} disabled={!!fixedPeriod} required />
-        </div>
-        <div className="field">
-          <label htmlFor="suppliers">suppliers.csv</label>
-          <input id="suppliers" type="file" accept=".csv,text/csv" ref={suppliers} />
-        </div>
-        <div className="field">
-          <label htmlFor="invoices">invoices.csv</label>
-          <input id="invoices" type="file" accept=".csv,text/csv" ref={invoices} />
-        </div>
-        <div className="field">
-          <button className="primary" type="submit" disabled={busy}>
-            {busy ? "Uploading…" : "Upload"}
-          </button>
-        </div>
-      </div>
-    </form>
-  );
-}
+import { DataTable } from "../components/DataTable";
+import { UploadForm } from "../components/Upload";
+import { Card, Empty, ErrorNotice, PageHeader, Skeleton, StateBadge } from "../components/ui";
+import { ago, count, useLoad } from "../lib";
 
 export function PeriodsPage() {
   const { has } = useAuth();
+  const navigate = useNavigate();
   const { data, error, loading, reload } = useLoad(() => api.get<Page<PeriodRow>>(`/datasets/${DATASET}/periods`), []);
+  const now = new Date();
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const defaultPeriod = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, "0")}`;
+
   return (
     <>
-      <div className="page-head">
-        <div>
-          <h1>Reporting periods</h1>
-          <p className="muted">Supplier Invoices ({DATASET}). One publishable version per period.</p>
-        </div>
-      </div>
-      {has("ANALYST") && (
-        <Card title="Upload a period">
-          <UploadForm onDone={reload} />
-        </Card>
-      )}
-      <Card title="Periods">
-        <ErrorBox error={error} />
-        {loading && !data && <Loading />}
-        {data && data.items.length === 0 && <Empty>No periods yet. Upload suppliers.csv and invoices.csv to begin.</Empty>}
-        {data && data.items.length > 0 && (
-          <table>
-            <thead>
-              <tr>
-                <th>Period</th>
-                <th>State</th>
-                <th>Current version</th>
-                <th className="num">Blocking</th>
-                <th className="num">Warnings</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.items.map((p) => (
-                <tr key={p.period}>
-                  <td>
-                    <Link to={`/periods/${p.period}`}>{p.period}</Link>
-                  </td>
-                  <td>
-                    <StateBadge state={p.derived_state} />
-                  </td>
-                  <td>{p.current_version ? <Link to={`/versions/${p.current_version.id}`}>{p.current_version.label}</Link> : "—"}</td>
-                  <td className="num">{p.current_version ? p.blocking_count : "—"}</td>
-                  <td className="num">{p.current_version ? p.warning_count : "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <PageHeader title="Reporting periods" subtitle="Supplier Invoices. Each period can be published once, from its current version." />
+      <div className="stack">
+        {has("ANALYST") && (
+          <Card title="Upload a period" subtitle="Upload suppliers.csv and invoices.csv together. A new upload for an existing period supersedes its current version.">
+            <UploadForm defaultPeriod={defaultPeriod} onDone={reload} />
+          </Card>
         )}
-      </Card>
+        <Card title="Periods" subtitle={data ? `${data.total} reporting period${data.total === 1 ? "" : "s"}` : undefined} flush>
+          <ErrorNotice error={error} />
+          {loading && !data && <Skeleton lines={5} />}
+          {data && (
+            <DataTable
+              rows={data.items}
+              rowKey={(p) => p.period}
+              onRowClick={(p) => navigate(`/periods/${p.period}`)}
+              initialSort={{ key: "period", dir: "desc" }}
+              empty={
+                <Empty icon={CalendarRange} title="No periods yet">
+                  {has("ANALYST") ? "Upload the two files above to create the first period." : "An analyst uploads each period's files."}
+                </Empty>
+              }
+              columns={[
+                { key: "period", header: "Period", className: "strong nowrap", sort: (p) => p.period, render: (p) => <Link to={`/periods/${p.period}`} onClick={(e) => e.stopPropagation()}>{p.period}</Link> },
+                { key: "state", header: "Status", className: "nowrap", render: (p) => <StateBadge state={p.derived_state} /> },
+                {
+                  key: "version",
+                  header: "Current version",
+                  className: "nowrap",
+                  render: (p) =>
+                    p.current_version ? (
+                      <Link to={`/versions/${p.current_version.id}`} onClick={(e) => e.stopPropagation()} className="mono">
+                        {p.current_version.label}
+                      </Link>
+                    ) : (
+                      <span className="faint">—</span>
+                    ),
+                },
+                { key: "rows", header: "Invoices", align: "right", sort: (p) => p.current_version?.row_counts.invoices ?? -1, render: (p) => count(p.current_version?.row_counts.invoices) },
+                { key: "blocking", header: "Blocking", align: "right", sort: (p) => (p.current_version ? p.blocking_count : -1), render: (p) => (p.current_version ? <span className={p.blocking_count ? "text-danger" : ""}>{p.blocking_count}</span> : "—") },
+                { key: "warnings", header: "Warnings", align: "right", sort: (p) => (p.current_version ? p.warning_count : -1), render: (p) => (p.current_version ? <span className={p.warning_count ? "text-warn" : ""}>{p.warning_count}</span> : "—") },
+                { key: "uploaded", header: "Last upload", className: "nowrap", render: (p) => (p.current_version ? <span className="muted">{ago(p.current_version.created_at)} · {p.current_version.created_by.display_name}</span> : "—") },
+              ]}
+            />
+          )}
+        </Card>
+      </div>
     </>
   );
 }
